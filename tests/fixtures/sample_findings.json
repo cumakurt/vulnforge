@@ -1,0 +1,8 @@
+{
+  "findings": [
+    {"url": "http://localhost:8000/php/sqli/products.php?id=1", "method": "GET", "parameter": "id", "cwe": "CWE-89", "type": "sqli", "evidence": "SQL error"},
+    {"url": "/php/xss/reflected.php", "method": "GET", "parameter": "name", "cwe": "CWE-79", "type": "xss", "evidence": "reflected payload"},
+    {"url": "/php/sqli/products_safe.php", "method": "GET", "parameter": "id", "cwe": "CWE-89", "type": "sqli", "evidence": "false positive on control twin"},
+    {"url": "/php/unknown/endpoint.php", "method": "GET", "parameter": "x", "cwe": "CWE-79", "type": "xss", "evidence": "unmatched"}
+  ]
+}

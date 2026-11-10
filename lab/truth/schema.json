@@ -1,0 +1,99 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://vulnforge.lab/schema/vuln/v1",
+  "title": "VulnForge Vulnerability Entry",
+  "type": "object",
+  "required": ["id", "name", "cwe", "service", "url", "method", "parameter", "parameter_location", "type", "difficulty", "auth_required", "detection_class", "needs_oob"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Z0-9]+-\\d{3,}$",
+      "description": "Unique vulnerability identifier, e.g. SQLI-001"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 5
+    },
+    "cwe": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^CWE-\\d+$" },
+      "minItems": 1
+    },
+    "cve": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^CVE-\\d{4}-\\d+$" },
+      "default": []
+    },
+    "owasp_web_2021": {
+      "type": ["string", "null"],
+      "enum": ["A01", "A02", "A03", "A04", "A05", "A06", "A07", "A08", "A09", "A10", null]
+    },
+    "owasp_api_2023": {
+      "type": ["string", "null"],
+      "enum": ["API1", "API2", "API3", "API4", "API5", "API6", "API7", "API8", "API9", "API10", null]
+    },
+    "service": {
+      "type": "string",
+      "enum": ["php-web", "node-api", "flask-svc", "spring-svc", "go-svc", "graphql-svc", "crawl-lab", "legacy-svc", "auth-svc", "gateway", "infra"]
+    },
+    "url": {
+      "type": "string",
+      "pattern": "^/"
+    },
+    "method": {
+      "type": "string",
+      "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS", "ANY"]
+    },
+    "parameter": {
+      "type": "string"
+    },
+    "parameter_location": {
+      "type": "string",
+      "enum": ["query", "body", "header", "cookie", "path", "multipart", "json", "fragment"]
+    },
+    "type": {
+      "type": "string",
+      "description": "Specific vulnerability subtype, e.g. error-based, reflected, stored"
+    },
+    "difficulty": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4,
+      "description": "L0=safe control, L1=no filter, L2=simple filter, L3=strong filter, L4=WAF/multi-step"
+    },
+    "auth_required": {
+      "type": "boolean"
+    },
+    "preconditions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "detection_class": {
+      "type": "string",
+      "enum": ["active", "passive", "sca", "config", "logic", "api"]
+    },
+    "needs_oob": {
+      "type": "boolean"
+    },
+    "exploit_proof": {
+      "type": "object",
+      "properties": {
+        "kind": { "type": "string", "enum": ["marker", "oob", "event", "diff"] },
+        "description": { "type": "string" }
+      },
+      "required": ["kind", "description"]
+    },
+    "references": {
+      "type": "array",
+      "items": { "type": "string", "format": "uri" },
+      "default": []
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    }
+  }
+}

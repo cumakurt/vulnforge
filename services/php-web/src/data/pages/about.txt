@@ -1,0 +1,4 @@
+About VulnForge Lab
+
+VulnForge is an intentionally vulnerable application suite used to benchmark
+web vulnerability scanners. It must only be run in an isolated local lab.

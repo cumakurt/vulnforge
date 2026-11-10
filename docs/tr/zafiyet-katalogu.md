@@ -1,0 +1,193 @@
+# Zafiyet kataloğu
+
+`@vuln` kaynak etiketlerinden otomatik üretilir
+(`lab/tools/generate_catalog.py`). Elle düzenlemeyin; `make catalog`
+komutuyla yeniden üretin.
+
+Toplam zafiyet: **99**
+Güvenli kontrol ikizi: **99**
+
+## Dağılım
+
+| Boyut | Değer | Adet |
+|---|---|---|
+| Zorluk | L1 | 67 |
+| Zorluk | L2 | 30 |
+| Zorluk | L3 | 2 |
+| OWASP Web 2021 | A01 | 21 |
+| OWASP Web 2021 | A02 | 5 |
+| OWASP Web 2021 | A03 | 19 |
+| OWASP Web 2021 | A04 | 10 |
+| OWASP Web 2021 | A05 | 21 |
+| OWASP Web 2021 | A06 | 2 |
+| OWASP Web 2021 | A07 | 12 |
+| OWASP Web 2021 | A08 | 5 |
+| OWASP Web 2021 | A10 | 4 |
+| OWASP API 2023 | API1 | 2 |
+| OWASP API 2023 | API2 | 4 |
+| OWASP API 2023 | API3 | 2 |
+| OWASP API 2023 | API4 | 5 |
+| OWASP API 2023 | API5 | 1 |
+| OWASP API 2023 | API7 | 1 |
+| OWASP API 2023 | API8 | 2 |
+| OWASP API 2023 | API9 | 3 |
+| Tespit sınıfı | active | 46 |
+| Tespit sınıfı | api | 12 |
+| Tespit sınıfı | config | 18 |
+| Tespit sınıfı | logic | 7 |
+| Tespit sınıfı | passive | 14 |
+| Tespit sınıfı | sca | 2 |
+| Servis | auth-svc | 7 |
+| Servis | crawl-lab | 8 |
+| Servis | flask-svc | 11 |
+| Servis | go-svc | 10 |
+| Servis | graphql-svc | 6 |
+| Servis | legacy-svc | 7 |
+| Servis | node-api | 14 |
+| Servis | php-web | 26 |
+| Servis | spring-svc | 10 |
+
+## auth-svc
+
+| ID | Seviye | Tür | Metot | URL | Parametre | OWASP | CWE | İkiz |
+|---|---|---|---|---|---|---|---|---|
+| OAUTH-001 | L1 | open-redirect-uri | GET | `/auth/authorize` | `redirect_uri` | A01 | CWE-601 | `/auth/authorize_safe` |
+| OAUTH-002 | L2 | missing-state | GET | `/auth/authorize` | `state` | A01 | CWE-352 | `/auth/authorize_state_safe` |
+| OAUTH-003 | L2 | implicit-flow | GET | `/auth/implicit` | `redirect_uri` | A07 | CWE-598 | `/auth/implicit_safe` |
+| OAUTH-004 | L2 | missing-pkce | POST | `/auth/token` | `code` | A07 | CWE-287 | `/auth/token_safe` |
+| OAUTH-005 | L2 | scope-escalation | GET | `/auth/scope` | `scope` | A01 | CWE-269 | `/auth/scope_safe` |
+| OAUTH-006 | L2 | saml-unsigned | POST | `/auth/saml/acs` | `SAMLResponse` | A07 | CWE-347 | `/auth/saml/acs_safe` |
+| OAUTH-007 | L1 | user-enumeration | POST | `/auth/login` | `username` | A07 | CWE-204 | `/auth/login_safe` |
+
+## crawl-lab
+
+| ID | Seviye | Tür | Metot | URL | Parametre | OWASP | CWE | İkiz |
+|---|---|---|---|---|---|---|---|---|
+| CRAWL-001 | L1 | robots-disclosure | GET | `/spa/robots.txt` | `none` | A05 | CWE-200 | `/spa/robots_safe.txt` |
+| CRAWL-002 | L1 | source-map-exposure | GET | `/spa/app.js.map` | `none` | A05 | CWE-540 | `/spa/app_safe.js.map` |
+| CRAWL-003 | L1 | hardcoded-secret | GET | `/spa/app.js` | `none` | A02 | CWE-798 | `/spa/app_safe.js` |
+| CRAWL-004 | L2 | soft-404 | GET | `/spa/this-page-does-not-exist` | `path` | A05 | CWE-391 | `/spa/not-found-safe-404` |
+| CRAWL-005 | L2 | infinite-pagination | GET | `/spa/api/products` | `page` | A04 | CWE-770 | `/spa/api/products_safe` |
+| CRAWL-006 | L2 | cswsh | GET | `/spa/ws-ticket` | `Origin` | A01 | CWE-346 | `/spa/ws-ticket_safe` |
+| CRAWL-007 | L2 | sse-data-leak | GET | `/spa/events` | `none` | A05 | CWE-200 | `/spa/events_safe` |
+| CRAWL-008 | L2 | hidden-panel | GET | `/spa/panel` | `none` | A01 | CWE-425 | `/spa/panel_safe` |
+
+## flask-svc
+
+| ID | Seviye | Tür | Metot | URL | Parametre | OWASP | CWE | İkiz |
+|---|---|---|---|---|---|---|---|---|
+| PY-001 | L1 | ssti | GET | `/py/ssti` | `name` | A03 | CWE-1336 | `/py/ssti_safe` |
+| PY-002 | L1 | insecure-deserialization | POST | `/py/pickle` | `data` | A08 | CWE-502 | `/py/pickle_safe` |
+| PY-003 | L1 | unsafe-yaml | POST | `/py/yaml` | `config` | A08 | CWE-502 | `/py/yaml_safe` |
+| PY-004 | L1 | path-traversal | GET | `/py/download` | `file` | A01 | CWE-22 | `/py/download_safe` |
+| PY-005 | L1 | ssrf | GET | `/py/fetch` | `url` | A10 | CWE-918 | `/py/fetch_safe` |
+| PY-006 | L1 | os-command | GET | `/py/ping` | `host` | A03 | CWE-78 | `/py/ping_safe` |
+| PY-007 | L1 | debug-console | GET | `/py/console` | `none` | A05 | CWE-94 | `/py/console_safe` |
+| PY-008 | L1 | open-redirect | GET | `/py/redirect` | `next` | A01 | CWE-601 | `/py/redirect_safe` |
+| PY-009 | L2 | weak-random | GET | `/py/reset_token` | `user` | A02 | CWE-330 | `/py/reset_token_safe` |
+| PY-010 | L1 | insecure-cookie | GET | `/py/login` | `session` | A07 | CWE-614 | `/py/login_safe` |
+| PY-011 | L2 | redos | GET | `/py/validate` | `email` | A04 | CWE-1333 | `/py/validate_safe` |
+
+## go-svc
+
+| ID | Seviye | Tür | Metot | URL | Parametre | OWASP | CWE | İkiz |
+|---|---|---|---|---|---|---|---|---|
+| GO-001 | L1 | ssrf | GET | `/go/proxy` | `url` | A10 | CWE-918 | `/go/proxy_safe` |
+| GO-002 | L2 | ssrf-blind | GET | `/go/pingback` | `url` | A10 | CWE-918 | `/go/pingback_safe` |
+| GO-003 | L3 | race-condition | POST | `/go/coupon/redeem` | `code` | A04 | CWE-362 | `/go/coupon/redeem_safe` |
+| GO-005 | L1 | path-traversal | GET | `/go/file` | `file` | A01 | CWE-22 | `/go/file_safe` |
+| GO-006 | L1 | os-command | GET | `/go/diag` | `cmd` | A03 | CWE-78 | `/go/diag_safe` |
+| GO-007 | L1 | open-redirect | GET | `/go/continue` | `next` | A01 | CWE-601 | `/go/continue_safe` |
+| GO-008 | L2 | otp-bruteforce | POST | `/go/otp/verify` | `code` | A04 | CWE-307 | `/go/otp/verify_safe` |
+| GO-009 | L1 | negative-amount | POST | `/go/wallet/purchase` | `amount` | A04 | CWE-840 | `/go/wallet/purchase_safe` |
+| GO-010 | L1 | verbose-error | GET | `/go/error` | `input` | A05 | CWE-209 | `/go/error_safe` |
+| GO-011 | L1 | cors-wildcard | GET | `/go/cors` | `Origin` | A05 | CWE-942 | `/go/cors_safe` |
+
+## graphql-svc
+
+| ID | Seviye | Tür | Metot | URL | Parametre | OWASP | CWE | İkiz |
+|---|---|---|---|---|---|---|---|---|
+| GQL-001 | L1 | introspection-enabled | POST | `/graphql` | `query` | A05 | CWE-200 | `/graphql_safe` |
+| GQL-002 | L1 | field-suggestion | POST | `/graphql` | `query` | A05 | CWE-200 | `/graphql_safe` |
+| GQL-003 | L2 | query-batching | POST | `/graphql` | `query` | A04 | CWE-770 | `/graphql_safe` |
+| GQL-004 | L2 | otp-bruteforce | POST | `/graphql` | `code` | A04 | CWE-307 | `/graphql_safe` |
+| GQL-005 | L2 | depth-dos | POST | `/graphql` | `query` | A04 | CWE-770 | `/graphql_safe` |
+| GQL-006 | L1 | bola | POST | `/graphql` | `id` | A01 | CWE-639 | `/graphql_safe` |
+
+## legacy-svc
+
+| ID | Seviye | Tür | Metot | URL | Parametre | OWASP | CWE | İkiz |
+|---|---|---|---|---|---|---|---|---|
+| LEG-001 | L1 | outdated-component | GET | `/legacy/` | `none` | A06 | CWE-1104 | `/legacy/index_safe.html` |
+| LEG-002 | L1 | backup-file | GET | `/legacy/config.php.bak` | `none` | A05 | CWE-538 | `/legacy/config_safe.bak` |
+| LEG-003 | L1 | vcs-exposure | GET | `/legacy/.git/config` | `none` | A05 | CWE-527 | `/legacy/git_safe/config` |
+| LEG-004 | L1 | directory-listing | GET | `/legacy/backup/` | `none` | A05 | CWE-548 | `/legacy/backup_safe/` |
+| LEG-005 | L1 | default-credentials | POST | `/legacy/admin/login.php` | `username` | A07 | CWE-1392 | `/legacy/admin/login_safe.php` |
+| LEG-006 | L1 | banner-disclosure | GET | `/legacy/banner` | `none` | A05 | CWE-200 | `/legacy/banner_safe` |
+| LEG-007 | L1 | cms-version-disclosure | GET | `/legacy/readme.html` | `none` | A06 | CWE-200 | `/legacy/readme_safe.html` |
+
+## node-api
+
+| ID | Seviye | Tür | Metot | URL | Parametre | OWASP | CWE | İkiz |
+|---|---|---|---|---|---|---|---|---|
+| API-001 | L1 | bola | GET | `/api/v1/orders/3` | `id` | A01 | CWE-639 | `/api/v2/orders/1` |
+| API-002 | L1 | excessive-data-exposure | GET | `/api/v1/users/1` | `id` | A01 | CWE-213 | `/api/v2/users/1` |
+| API-003 | L1 | bfla | DELETE | `/api/v1/users/1` | `id` | A01 | CWE-285 | `/api/v2/users/1` |
+| API-004 | L1 | mass-assignment | PUT | `/api/v1/users/2` | `role` | A01 | CWE-915 | `/api/v2/users/2` |
+| API-005 | L1 | nosql-injection | POST | `/api/v1/login` | `username` | A03 | CWE-943 | `/api/v2/login` |
+| API-006 | L2 | jwt-none-alg | GET | `/api/v1/auth/whoami` | `Authorization` | A07 | CWE-347 | `/api/v2/auth/whoami` |
+| API-007 | L1 | broken-authentication | GET | `/api/v1/auth/impersonate` | `username` | A07 | CWE-287 | `/api/v2/auth/impersonate` |
+| API-008 | L2 | prototype-pollution | POST | `/api/v1/settings` | `__proto__` | A08 | CWE-1321 | `/api/v2/settings` |
+| API-009 | L1 | ssrf | POST | `/api/v1/webhook/fetch` | `url` | A10 | CWE-918 | `/api/v2/webhook/fetch` |
+| API-010 | L1 | unbounded-pagination | GET | `/api/v1/products` | `limit` | A04 | CWE-770 | `/api/v2/products` |
+| API-011 | L1 | api-key-in-url | GET | `/api/v1/export` | `api_key` | A02 | CWE-598 | `/api/v2/export` |
+| API-012 | L1 | shadow-endpoint | GET | `/api/internal/debug` | `none` | A05 | CWE-200 | `/api/v2/internal/debug` |
+| API-013 | L1 | cors-misconfig | GET | `/api/v1/cors-test` | `Origin` | A05 | CWE-942 | `/api/v2/cors-test` |
+| API-014 | L2 | missing-rate-limit | POST | `/api/v1/auth/login` | `password` | A04 | CWE-307 | `/api/v2/auth/login` |
+
+## php-web
+
+| ID | Seviye | Tür | Metot | URL | Parametre | OWASP | CWE | İkiz |
+|---|---|---|---|---|---|---|---|---|
+| AUTH-001 | L2 | auth-bypass | POST | `/php/auth/login.php` | `username` | A07 | CWE-89 | `/php/auth/login_safe.php` |
+| AUTH-002 | L2 | session-fixation | POST | `/php/auth/login.php` | `PHPSESSID` | A07 | CWE-384 | `/php/auth/login_safe.php` |
+| AUTH-003 | L1 | user-enumeration | POST | `/php/auth/login.php` | `username` | A07 | CWE-204 | `/php/auth/login_safe.php` |
+| AUTH-004 | L2 | insufficient-logout | GET | `/php/auth/logout.php` | `PHPSESSID` | A07 | CWE-613 | `/php/auth/logout_safe.php` |
+| CMDI-001 | L1 | os-command | GET | `/php/cmdi/ping.php` | `host` | A03 | CWE-78 | `/php/cmdi/ping_safe.php` |
+| CMDI-002 | L2 | blind-time | GET | `/php/cmdi/blind.php` | `host` | A03 | CWE-78 | `/php/cmdi/blind_safe.php` |
+| CONF-001 | L1 | verbose-error | GET | `/php/config/debug.php` | `input` | A05 | CWE-209 | `/php/config/debug_safe.php` |
+| CONF-002 | L1 | info-disclosure | GET | `/php/config/phpinfo.php` | `section` | A05 | CWE-200 | `/php/config/phpinfo_safe.php` |
+| CRYPTO-001 | L1 | weak-password-hash | POST | `/php/crypto/hash.php` | `password` | A02 | CWE-916 | `/php/crypto/hash_safe.php` |
+| CSRF-001 | L1 | missing-token | POST | `/php/csrf/change_password.php` | `new_password` | A01 | CWE-352 | `/php/csrf/change_password_safe.php` |
+| IDOR-001 | L1 | idor | GET | `/php/idor/order.php` | `id` | A01 | CWE-639 | `/php/idor/order_safe.php` |
+| IDOR-002 | L1 | idor | GET | `/php/idor/profile.php` | `user_id` | A01 | CWE-639 | `/php/idor/profile_safe.php` |
+| INFO-001 | L1 | robots-disclosure | GET | `/php/robots.txt` | `none` | A05 | CWE-200 | `/php/robots_safe.txt` |
+| LFI-001 | L1 | path-traversal | GET | `/php/lfi/read.php` | `file` | A01 | CWE-22 | `/php/lfi/read_safe.php` |
+| REDIR-001 | L1 | open-redirect | GET | `/php/redirect/redirect.php` | `next` | A01 | CWE-601 | `/php/redirect/redirect_safe.php` |
+| SQLI-001 | L1 | error-based | GET | `/php/sqli/products.php` | `id` | A03 | CWE-89 | `/php/sqli/products_safe.php` |
+| SQLI-002 | L1 | union-based | GET | `/php/sqli/search.php` | `q` | A03 | CWE-89 | `/php/sqli/search_safe.php` |
+| SQLI-003 | L2 | boolean-blind | GET | `/php/sqli/blind.php` | `id` | A03 | CWE-89 | `/php/sqli/blind_safe.php` |
+| SQLI-004 | L2 | time-based-blind | GET | `/php/sqli/time_blind.php` | `id` | A03 | CWE-89 | `/php/sqli/time_blind_safe.php` |
+| SQLI-005 | L1 | order-by-injection | GET | `/php/sqli/order.php` | `sort` | A03 | CWE-89 | `/php/sqli/order_safe.php` |
+| SQLI-006 | L3 | second-order | POST | `/php/sqli/second_order.php` | `username` | A03 | CWE-89 | `/php/sqli/second_order_safe.php` |
+| SQLI-007 | L2 | header-injection | GET | `/php/sqli/header_inject.php` | `X-Forwarded-For` | A03 | CWE-89 | `/php/sqli/header_inject_safe.php` |
+| UPLOAD-001 | L1 | unrestricted-upload | POST | `/php/upload/upload.php` | `file` | A08 | CWE-434 | `/php/upload/upload_safe.php` |
+| XSS-001 | L1 | reflected | GET | `/php/xss/reflected.php` | `name` | A03 | CWE-79 | `/php/xss/reflected_safe.php` |
+| XSS-002 | L1 | stored | POST | `/php/xss/stored.php` | `body` | A03 | CWE-79 | `/php/xss/stored_safe.php` |
+| XSS-003 | L2 | dom | GET | `/php/xss/dom.php` | `hash` | A03 | CWE-79 | `/php/xss/dom_safe.php` |
+
+## spring-svc
+
+| ID | Seviye | Tür | Metot | URL | Parametre | OWASP | CWE | İkiz |
+|---|---|---|---|---|---|---|---|---|
+| JAVA-001 | L1 | xxe | POST | `/java/xxe` | `body` | A05 | CWE-611 | `/java/xxe_safe` |
+| JAVA-002 | L1 | insecure-deserialization | POST | `/java/deserialize` | `data` | A08 | CWE-502 | `/java/deserialize_safe` |
+| JAVA-003 | L2 | el-injection | GET | `/java/template` | `name` | A03 | CWE-917 | `/java/template_safe` |
+| JAVA-004 | L2 | jndi-lookup | GET | `/java/log` | `msg` | A03 | CWE-917 | `/java/log_safe` |
+| JAVA-005 | L1 | path-traversal | GET | `/java/download` | `file` | A01 | CWE-22 | `/java/download_safe` |
+| JAVA-006 | L1 | actuator-exposure | GET | `/java/actuator/env` | `none` | A05 | CWE-200 | `/java/actuator/env_safe` |
+| JAVA-007 | L1 | weak-crypto | POST | `/java/encrypt` | `data` | A02 | CWE-327 | `/java/encrypt_safe` |
+| JAVA-008 | L1 | os-command | GET | `/java/exec` | `cmd` | A03 | CWE-78 | `/java/exec_safe` |
+| JAVA-009 | L1 | open-redirect | GET | `/java/go` | `url` | A01 | CWE-601 | `/java/go_safe` |
+| JAVA-010 | L1 | verbose-error | GET | `/java/stack` | `input` | A05 | CWE-209 | `/java/stack_safe` |
+

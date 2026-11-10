@@ -1,0 +1,36 @@
+VulnForge Lab
+=============
+
+An intentionally vulnerable web application suite used to benchmark web
+vulnerability scanners in an isolated local environment.
+
+Author
+------
+Cuma KURT
+  E-mail:   cumakurt@gmail.com
+  LinkedIn: https://www.linkedin.com/in/cuma-kurt-34414917/
+  GitHub:   https://github.com/cumakurt/vulnforge
+
+License
+-------
+Copyright (C) 2026 Cuma KURT
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU Affero General Public License as published by the Free
+Software Foundation, either version 3 of the License, or (at your option) any
+later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License along
+with this program. If not, see <https://www.gnu.org/licenses/>.
+
+The project is licensed under AGPL-3.0 only. No other license applies.
+
+Security notice
+---------------
+VulnForge Lab is deliberately insecure. Run it only on a machine you control,
+inside an isolated network. Never expose it to the internet and never deploy it
+in production. See SECURITY.md for the full operating model.

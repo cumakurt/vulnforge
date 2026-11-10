@@ -1,0 +1,4 @@
+# @control id=INFO-001-C twin_of=INFO-001 url=/php/robots_safe.txt method=GET param=none service=php-web param_loc=path
+# A secure robots.txt does not enumerate internal paths.
+User-agent: *
+Disallow: /

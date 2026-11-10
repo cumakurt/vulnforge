@@ -1,0 +1,3058 @@
+[
+  {
+    "id": "API-001",
+    "name": "BOLA: any authenticated user can read any order",
+    "cwe": [
+      "CWE-639"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A01",
+    "owasp_api_2023": "API1",
+    "service": "node-api",
+    "url": "/api/v1/orders/3",
+    "method": "GET",
+    "parameter": "id",
+    "parameter_location": "path",
+    "type": "bola",
+    "difficulty": 1,
+    "auth_required": true,
+    "preconditions": [],
+    "detection_class": "api",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Order belonging to another user is returned when its sequential id is requested"
+    },
+    "references": [],
+    "tags": [
+      "api",
+      "access-control",
+      "bola"
+    ]
+  },
+  {
+    "id": "API-002",
+    "name": "BOPLA: user endpoint returns password, SSN and balance",
+    "cwe": [
+      "CWE-213"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A01",
+    "owasp_api_2023": "API3",
+    "service": "node-api",
+    "url": "/api/v1/users/1",
+    "method": "GET",
+    "parameter": "id",
+    "parameter_location": "path",
+    "type": "excessive-data-exposure",
+    "difficulty": 1,
+    "auth_required": true,
+    "preconditions": [],
+    "detection_class": "api",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Response contains password, ssn and apiKey fields"
+    },
+    "references": [],
+    "tags": [
+      "api",
+      "data-exposure",
+      "bopla"
+    ]
+  },
+  {
+    "id": "API-003",
+    "name": "BFLA: normal user can delete any account",
+    "cwe": [
+      "CWE-285"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A01",
+    "owasp_api_2023": "API5",
+    "service": "node-api",
+    "url": "/api/v1/users/1",
+    "method": "DELETE",
+    "parameter": "id",
+    "parameter_location": "path",
+    "type": "bfla",
+    "difficulty": 1,
+    "auth_required": true,
+    "preconditions": [],
+    "detection_class": "api",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "A standard user token deletes the administrator account"
+    },
+    "references": [],
+    "tags": [
+      "api",
+      "access-control",
+      "bfla"
+    ]
+  },
+  {
+    "id": "API-004",
+    "name": "Mass assignment allows self-service role escalation",
+    "cwe": [
+      "CWE-915"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A01",
+    "owasp_api_2023": "API3",
+    "service": "node-api",
+    "url": "/api/v1/users/2",
+    "method": "PUT",
+    "parameter": "role",
+    "parameter_location": "json",
+    "type": "mass-assignment",
+    "difficulty": 1,
+    "auth_required": true,
+    "preconditions": [],
+    "detection_class": "api",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Sending role=admin updates the account role"
+    },
+    "references": [],
+    "tags": [
+      "api",
+      "access-control",
+      "mass-assignment"
+    ]
+  },
+  {
+    "id": "API-005",
+    "name": "NoSQL operator injection in login",
+    "cwe": [
+      "CWE-943"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A03",
+    "owasp_api_2023": "API2",
+    "service": "node-api",
+    "url": "/api/v1/login",
+    "method": "POST",
+    "parameter": "username",
+    "parameter_location": "json",
+    "type": "nosql-injection",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "api",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "JSON body with $ne operators authenticates as the administrator without a password"
+    },
+    "references": [],
+    "tags": [
+      "api",
+      "injection",
+      "nosql"
+    ]
+  },
+  {
+    "id": "API-006",
+    "name": "JWT algorithm confusion: alg=none accepted",
+    "cwe": [
+      "CWE-347"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A07",
+    "owasp_api_2023": "API2",
+    "service": "node-api",
+    "url": "/api/v1/auth/whoami",
+    "method": "GET",
+    "parameter": "Authorization",
+    "parameter_location": "header",
+    "type": "jwt-none-alg",
+    "difficulty": 2,
+    "auth_required": true,
+    "preconditions": [],
+    "detection_class": "api",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Unsigned token with alg=none grants administrator access"
+    },
+    "references": [],
+    "tags": [
+      "api",
+      "auth",
+      "jwt"
+    ]
+  },
+  {
+    "id": "API-007",
+    "name": "Unauthenticated token impersonation endpoint",
+    "cwe": [
+      "CWE-287"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A07",
+    "owasp_api_2023": "API2",
+    "service": "node-api",
+    "url": "/api/v1/auth/impersonate",
+    "method": "GET",
+    "parameter": "username",
+    "parameter_location": "query",
+    "type": "broken-authentication",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "api",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Requesting an admin token requires no credentials at all"
+    },
+    "references": [],
+    "tags": [
+      "api",
+      "auth",
+      "impersonation"
+    ]
+  },
+  {
+    "id": "API-008",
+    "name": "Server-side prototype pollution via settings merge",
+    "cwe": [
+      "CWE-1321"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A08",
+    "owasp_api_2023": "API8",
+    "service": "node-api",
+    "url": "/api/v1/settings",
+    "method": "POST",
+    "parameter": "__proto__",
+    "parameter_location": "json",
+    "type": "prototype-pollution",
+    "difficulty": 2,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "api",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "A __proto__ key pollutes Object.prototype and is visible on later requests"
+    },
+    "references": [],
+    "tags": [
+      "api",
+      "injection",
+      "prototype-pollution"
+    ]
+  },
+  {
+    "id": "API-009",
+    "name": "SSRF in webhook fetch endpoint",
+    "cwe": [
+      "CWE-918"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A10",
+    "owasp_api_2023": "API7",
+    "service": "node-api",
+    "url": "/api/v1/webhook/fetch",
+    "method": "POST",
+    "parameter": "url",
+    "parameter_location": "json",
+    "type": "ssrf",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "api",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Server fetches cloud metadata credentials from the internal network"
+    },
+    "references": [],
+    "tags": [
+      "api",
+      "ssrf"
+    ]
+  },
+  {
+    "id": "API-010",
+    "name": "Unbounded pagination allows resource exhaustion",
+    "cwe": [
+      "CWE-770"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A04",
+    "owasp_api_2023": "API4",
+    "service": "node-api",
+    "url": "/api/v1/products",
+    "method": "GET",
+    "parameter": "limit",
+    "parameter_location": "query",
+    "type": "unbounded-pagination",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "api",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "limit=5000 returns the entire catalogue in a single response"
+    },
+    "references": [],
+    "tags": [
+      "api",
+      "dos",
+      "pagination"
+    ]
+  },
+  {
+    "id": "API-011",
+    "name": "API key accepted in the query string",
+    "cwe": [
+      "CWE-598"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A02",
+    "owasp_api_2023": "API2",
+    "service": "node-api",
+    "url": "/api/v1/export",
+    "method": "GET",
+    "parameter": "api_key",
+    "parameter_location": "query",
+    "type": "api-key-in-url",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "api",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "A valid api_key query parameter grants access, leaking the key into logs and history"
+    },
+    "references": [],
+    "tags": [
+      "api",
+      "auth",
+      "api-key"
+    ]
+  },
+  {
+    "id": "API-012",
+    "name": "Undocumented debug endpoint exposes configuration",
+    "cwe": [
+      "CWE-200"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A05",
+    "owasp_api_2023": "API9",
+    "service": "node-api",
+    "url": "/api/internal/debug",
+    "method": "GET",
+    "parameter": "none",
+    "parameter_location": "path",
+    "type": "shadow-endpoint",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "config",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Response lists environment variables including the JWT signing secret"
+    },
+    "references": [],
+    "tags": [
+      "api",
+      "info-leak",
+      "shadow-api"
+    ]
+  },
+  {
+    "id": "API-013",
+    "name": "CORS reflects arbitrary Origin with credentials",
+    "cwe": [
+      "CWE-942"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A05",
+    "owasp_api_2023": "API8",
+    "service": "node-api",
+    "url": "/api/v1/cors-test",
+    "method": "GET",
+    "parameter": "Origin",
+    "parameter_location": "header",
+    "type": "cors-misconfig",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "config",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Access-Control-Allow-Origin echoes an attacker origin together with Allow-Credentials: true"
+    },
+    "references": [],
+    "tags": [
+      "api",
+      "cors",
+      "misconfiguration"
+    ]
+  },
+  {
+    "id": "API-014",
+    "name": "No rate limiting or lockout on legacy authentication",
+    "cwe": [
+      "CWE-307"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A04",
+    "owasp_api_2023": "API4",
+    "service": "node-api",
+    "url": "/api/v1/auth/login",
+    "method": "POST",
+    "parameter": "password",
+    "parameter_location": "json",
+    "type": "missing-rate-limit",
+    "difficulty": 2,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "logic",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Unlimited failed logins are accepted and a correct password still succeeds afterwards"
+    },
+    "references": [],
+    "tags": [
+      "api",
+      "authentication",
+      "rate-limit"
+    ]
+  },
+  {
+    "id": "AUTH-001",
+    "name": "SQL injection authentication bypass",
+    "cwe": [
+      "CWE-89"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A07",
+    "owasp_api_2023": null,
+    "service": "php-web",
+    "url": "/php/auth/login.php",
+    "method": "POST",
+    "parameter": "username",
+    "parameter_location": "body",
+    "type": "auth-bypass",
+    "difficulty": 2,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Username payload such as admin'-- logs in without the correct password"
+    },
+    "references": [],
+    "tags": [
+      "auth",
+      "sqli",
+      "login"
+    ]
+  },
+  {
+    "id": "AUTH-002",
+    "name": "Session fixation in login flow",
+    "cwe": [
+      "CWE-384"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A07",
+    "owasp_api_2023": null,
+    "service": "php-web",
+    "url": "/php/auth/login.php",
+    "method": "POST",
+    "parameter": "PHPSESSID",
+    "parameter_location": "cookie",
+    "type": "session-fixation",
+    "difficulty": 2,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "passive",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Pre-set session cookie remains valid after successful authentication"
+    },
+    "references": [],
+    "tags": [
+      "auth",
+      "session",
+      "fixation"
+    ]
+  },
+  {
+    "id": "AUTH-003",
+    "name": "Username enumeration through distinct login errors",
+    "cwe": [
+      "CWE-204"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A07",
+    "owasp_api_2023": null,
+    "service": "php-web",
+    "url": "/php/auth/login.php",
+    "method": "POST",
+    "parameter": "username",
+    "parameter_location": "body",
+    "type": "user-enumeration",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "passive",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "'Unknown user' and 'wrong password' responses are distinguishable"
+    },
+    "references": [],
+    "tags": [
+      "auth",
+      "enumeration",
+      "info-leak"
+    ]
+  },
+  {
+    "id": "AUTH-004",
+    "name": "Logout does not invalidate the server-side session",
+    "cwe": [
+      "CWE-613"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A07",
+    "owasp_api_2023": null,
+    "service": "php-web",
+    "url": "/php/auth/logout.php",
+    "method": "GET",
+    "parameter": "PHPSESSID",
+    "parameter_location": "cookie",
+    "type": "insufficient-logout",
+    "difficulty": 2,
+    "auth_required": true,
+    "preconditions": [],
+    "detection_class": "passive",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Replaying the captured session cookie after logout still grants access"
+    },
+    "references": [],
+    "tags": [
+      "auth",
+      "session",
+      "logout"
+    ]
+  },
+  {
+    "id": "CMDI-001",
+    "name": "OS command injection in network diagnostics",
+    "cwe": [
+      "CWE-78"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A03",
+    "owasp_api_2023": null,
+    "service": "php-web",
+    "url": "/php/cmdi/ping.php",
+    "method": "GET",
+    "parameter": "host",
+    "parameter_location": "query",
+    "type": "os-command",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Injected shell metacharacters execute and their output appears in the response"
+    },
+    "references": [],
+    "tags": [
+      "injection",
+      "command",
+      "rce"
+    ]
+  },
+  {
+    "id": "CMDI-002",
+    "name": "Blind time-based OS command injection",
+    "cwe": [
+      "CWE-78"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A03",
+    "owasp_api_2023": null,
+    "service": "php-web",
+    "url": "/php/cmdi/blind.php",
+    "method": "GET",
+    "parameter": "host",
+    "parameter_location": "query",
+    "type": "blind-time",
+    "difficulty": 2,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "diff",
+      "description": "Response time exceeds 3 seconds when a sleep command is injected"
+    },
+    "references": [],
+    "tags": [
+      "injection",
+      "command",
+      "blind",
+      "time"
+    ]
+  },
+  {
+    "id": "CONF-001",
+    "name": "Detailed exception page discloses stack trace and paths",
+    "cwe": [
+      "CWE-209"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A05",
+    "owasp_api_2023": null,
+    "service": "php-web",
+    "url": "/php/config/debug.php",
+    "method": "GET",
+    "parameter": "input",
+    "parameter_location": "query",
+    "type": "verbose-error",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "config",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Response includes exception class, file paths and stack trace"
+    },
+    "references": [],
+    "tags": [
+      "misconfiguration",
+      "info-leak",
+      "error-handling"
+    ]
+  },
+  {
+    "id": "CONF-002",
+    "name": "phpinfo() exposed to unauthenticated users",
+    "cwe": [
+      "CWE-200"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A05",
+    "owasp_api_2023": null,
+    "service": "php-web",
+    "url": "/php/config/phpinfo.php",
+    "method": "GET",
+    "parameter": "section",
+    "parameter_location": "query",
+    "type": "info-disclosure",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "config",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Full PHP configuration including modules, paths and environment is rendered"
+    },
+    "references": [],
+    "tags": [
+      "misconfiguration",
+      "info-leak",
+      "phpinfo"
+    ]
+  },
+  {
+    "id": "CRAWL-001",
+    "name": "robots.txt discloses hidden application paths",
+    "cwe": [
+      "CWE-200"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A05",
+    "owasp_api_2023": null,
+    "service": "crawl-lab",
+    "url": "/spa/robots.txt",
+    "method": "GET",
+    "parameter": "none",
+    "parameter_location": "path",
+    "type": "robots-disclosure",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "passive",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Disallow entries reveal the support panel and export endpoint"
+    },
+    "references": [],
+    "tags": [
+      "discovery",
+      "info-leak",
+      "robots"
+    ]
+  },
+  {
+    "id": "CRAWL-002",
+    "name": "JavaScript source map exposes source code",
+    "cwe": [
+      "CWE-540"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A05",
+    "owasp_api_2023": null,
+    "service": "crawl-lab",
+    "url": "/spa/app.js.map",
+    "method": "GET",
+    "parameter": "none",
+    "parameter_location": "path",
+    "type": "source-map-exposure",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "passive",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "The .map file serves original sources including embedded credentials"
+    },
+    "references": [],
+    "tags": [
+      "discovery",
+      "info-leak",
+      "source-map"
+    ]
+  },
+  {
+    "id": "CRAWL-003",
+    "name": "API key embedded in the client bundle",
+    "cwe": [
+      "CWE-798"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A02",
+    "owasp_api_2023": null,
+    "service": "crawl-lab",
+    "url": "/spa/app.js",
+    "method": "GET",
+    "parameter": "none",
+    "parameter_location": "path",
+    "type": "hardcoded-secret",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "passive",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "The bundle contains a hard-coded internal API key"
+    },
+    "references": [],
+    "tags": [
+      "discovery",
+      "info-leak",
+      "secret"
+    ]
+  },
+  {
+    "id": "CRAWL-004",
+    "name": "Soft 404 returns HTTP 200",
+    "cwe": [
+      "CWE-391"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A05",
+    "owasp_api_2023": null,
+    "service": "crawl-lab",
+    "url": "/spa/this-page-does-not-exist",
+    "method": "GET",
+    "parameter": "path",
+    "parameter_location": "path",
+    "type": "soft-404",
+    "difficulty": 2,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "passive",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Unknown paths return 200 with a 'not found' body, confusing crawlers"
+    },
+    "references": [],
+    "tags": [
+      "discovery",
+      "soft-404"
+    ]
+  },
+  {
+    "id": "CRAWL-005",
+    "name": "Unbounded pagination trap",
+    "cwe": [
+      "CWE-770"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A04",
+    "owasp_api_2023": null,
+    "service": "crawl-lab",
+    "url": "/spa/api/products",
+    "method": "GET",
+    "parameter": "page",
+    "parameter_location": "query",
+    "type": "infinite-pagination",
+    "difficulty": 2,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "passive",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "page parameter has no upper bound and always returns a next page"
+    },
+    "references": [],
+    "tags": [
+      "discovery",
+      "pagination",
+      "dos"
+    ]
+  },
+  {
+    "id": "CRAWL-006",
+    "name": "WebSocket upgrade accepts any Origin",
+    "cwe": [
+      "CWE-346"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A01",
+    "owasp_api_2023": null,
+    "service": "crawl-lab",
+    "url": "/spa/ws-ticket",
+    "method": "GET",
+    "parameter": "Origin",
+    "parameter_location": "header",
+    "type": "cswsh",
+    "difficulty": 2,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "passive",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Upgrade is allowed for an arbitrary attack origin"
+    },
+    "references": [],
+    "tags": [
+      "websocket",
+      "cswsh",
+      "origin"
+    ]
+  },
+  {
+    "id": "CRAWL-007",
+    "name": "SSE stream leaks session token to any client",
+    "cwe": [
+      "CWE-200"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A05",
+    "owasp_api_2023": null,
+    "service": "crawl-lab",
+    "url": "/spa/events",
+    "method": "GET",
+    "parameter": "none",
+    "parameter_location": "path",
+    "type": "sse-data-leak",
+    "difficulty": 2,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "passive",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "The event stream contains a reusable session token"
+    },
+    "references": [],
+    "tags": [
+      "discovery",
+      "sse",
+      "info-leak"
+    ]
+  },
+  {
+    "id": "CRAWL-008",
+    "name": "Hidden admin panel reachable without authentication",
+    "cwe": [
+      "CWE-425"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A01",
+    "owasp_api_2023": null,
+    "service": "crawl-lab",
+    "url": "/spa/panel",
+    "method": "GET",
+    "parameter": "none",
+    "parameter_location": "path",
+    "type": "hidden-panel",
+    "difficulty": 2,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "The undocumented support panel is served to anyone who finds it"
+    },
+    "references": [],
+    "tags": [
+      "discovery",
+      "access-control",
+      "hidden-endpoint"
+    ]
+  },
+  {
+    "id": "CRYPTO-001",
+    "name": "Password hashing with unsalted MD5",
+    "cwe": [
+      "CWE-916"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A02",
+    "owasp_api_2023": null,
+    "service": "php-web",
+    "url": "/php/crypto/hash.php",
+    "method": "POST",
+    "parameter": "password",
+    "parameter_location": "body",
+    "type": "weak-password-hash",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "config",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "The response contains a bare 32-character MD5 digest for the supplied password"
+    },
+    "references": [],
+    "tags": [
+      "crypto",
+      "password",
+      "hash"
+    ]
+  },
+  {
+    "id": "CSRF-001",
+    "name": "Password change without CSRF token",
+    "cwe": [
+      "CWE-352"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A01",
+    "owasp_api_2023": null,
+    "service": "php-web",
+    "url": "/php/csrf/change_password.php",
+    "method": "POST",
+    "parameter": "new_password",
+    "parameter_location": "body",
+    "type": "missing-token",
+    "difficulty": 1,
+    "auth_required": true,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "A cross-site POST changes the victim password because no anti-CSRF token is checked"
+    },
+    "references": [],
+    "tags": [
+      "csrf",
+      "session"
+    ]
+  },
+  {
+    "id": "GO-001",
+    "name": "SSRF in image proxy",
+    "cwe": [
+      "CWE-918"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A10",
+    "owasp_api_2023": null,
+    "service": "go-svc",
+    "url": "/go/proxy",
+    "method": "GET",
+    "parameter": "url",
+    "parameter_location": "query",
+    "type": "ssrf",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Internal metadata credentials are returned through the proxy"
+    },
+    "references": [],
+    "tags": [
+      "ssrf"
+    ]
+  },
+  {
+    "id": "GO-002",
+    "name": "Blind SSRF via webhook ping",
+    "cwe": [
+      "CWE-918"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A10",
+    "owasp_api_2023": null,
+    "service": "go-svc",
+    "url": "/go/pingback",
+    "method": "GET",
+    "parameter": "url",
+    "parameter_location": "query",
+    "type": "ssrf-blind",
+    "difficulty": 2,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": true,
+    "exploit_proof": {
+      "kind": "oob",
+      "description": "The server issues a request to the supplied URL; only an out-of-band callback proves it"
+    },
+    "references": [],
+    "tags": [
+      "ssrf",
+      "blind",
+      "oob"
+    ]
+  },
+  {
+    "id": "GO-003",
+    "name": "Race condition allows a coupon to be redeemed repeatedly",
+    "cwe": [
+      "CWE-362"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A04",
+    "owasp_api_2023": null,
+    "service": "go-svc",
+    "url": "/go/coupon/redeem",
+    "method": "POST",
+    "parameter": "code",
+    "parameter_location": "body",
+    "type": "race-condition",
+    "difficulty": 3,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "logic",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Parallel redemptions credit the balance more than once"
+    },
+    "references": [],
+    "tags": [
+      "logic",
+      "race",
+      "toctou"
+    ]
+  },
+  {
+    "id": "GO-005",
+    "name": "Path traversal in static file resolver",
+    "cwe": [
+      "CWE-22"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A01",
+    "owasp_api_2023": null,
+    "service": "go-svc",
+    "url": "/go/file",
+    "method": "GET",
+    "parameter": "file",
+    "parameter_location": "query",
+    "type": "path-traversal",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Files outside the documents directory can be read"
+    },
+    "references": [],
+    "tags": [
+      "file",
+      "traversal"
+    ]
+  },
+  {
+    "id": "GO-006",
+    "name": "Command injection in diagnostic runner",
+    "cwe": [
+      "CWE-78"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A03",
+    "owasp_api_2023": null,
+    "service": "go-svc",
+    "url": "/go/diag",
+    "method": "GET",
+    "parameter": "cmd",
+    "parameter_location": "query",
+    "type": "os-command",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Shell metacharacters execute and their output is returned"
+    },
+    "references": [],
+    "tags": [
+      "injection",
+      "command",
+      "rce"
+    ]
+  },
+  {
+    "id": "GO-007",
+    "name": "Open redirect in continue parameter",
+    "cwe": [
+      "CWE-601"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A01",
+    "owasp_api_2023": null,
+    "service": "go-svc",
+    "url": "/go/continue",
+    "method": "GET",
+    "parameter": "next",
+    "parameter_location": "query",
+    "type": "open-redirect",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Location header points at an arbitrary external host"
+    },
+    "references": [],
+    "tags": [
+      "redirect"
+    ]
+  },
+  {
+    "id": "GO-008",
+    "name": "OTP verification without attempt limit",
+    "cwe": [
+      "CWE-307"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A04",
+    "owasp_api_2023": null,
+    "service": "go-svc",
+    "url": "/go/otp/verify",
+    "method": "POST",
+    "parameter": "code",
+    "parameter_location": "json",
+    "type": "otp-bruteforce",
+    "difficulty": 2,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "logic",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Unlimited wrong codes are accepted and the correct OTP still validates afterwards"
+    },
+    "references": [],
+    "tags": [
+      "auth",
+      "otp",
+      "rate-limit"
+    ]
+  },
+  {
+    "id": "GO-009",
+    "name": "Negative purchase amount credits the wallet",
+    "cwe": [
+      "CWE-840"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A04",
+    "owasp_api_2023": null,
+    "service": "go-svc",
+    "url": "/go/wallet/purchase",
+    "method": "POST",
+    "parameter": "amount",
+    "parameter_location": "json",
+    "type": "negative-amount",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "logic",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "A negative amount increases the balance instead of being rejected"
+    },
+    "references": [],
+    "tags": [
+      "logic",
+      "business-logic",
+      "integer"
+    ]
+  },
+  {
+    "id": "GO-010",
+    "name": "Panic handler returns full Go stack trace",
+    "cwe": [
+      "CWE-209"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A05",
+    "owasp_api_2023": null,
+    "service": "go-svc",
+    "url": "/go/error",
+    "method": "GET",
+    "parameter": "input",
+    "parameter_location": "query",
+    "type": "verbose-error",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "config",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Response contains goroutine dump and source file paths"
+    },
+    "references": [],
+    "tags": [
+      "misconfiguration",
+      "info-leak"
+    ]
+  },
+  {
+    "id": "GO-011",
+    "name": "Permissive CORS policy with wildcard origin",
+    "cwe": [
+      "CWE-942"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A05",
+    "owasp_api_2023": null,
+    "service": "go-svc",
+    "url": "/go/cors",
+    "method": "GET",
+    "parameter": "Origin",
+    "parameter_location": "header",
+    "type": "cors-wildcard",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "config",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Access-Control-Allow-Origin is * and credentials are allowed"
+    },
+    "references": [],
+    "tags": [
+      "cors",
+      "misconfiguration"
+    ]
+  },
+  {
+    "id": "GQL-001",
+    "name": "GraphQL introspection enabled",
+    "cwe": [
+      "CWE-200"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A05",
+    "owasp_api_2023": "API9",
+    "service": "graphql-svc",
+    "url": "/graphql",
+    "method": "POST",
+    "parameter": "query",
+    "parameter_location": "json",
+    "type": "introspection-enabled",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "config",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "__schema returns the full type system"
+    },
+    "references": [],
+    "tags": [
+      "graphql",
+      "info-leak",
+      "introspection"
+    ]
+  },
+  {
+    "id": "GQL-002",
+    "name": "Field suggestion leaks hidden field names",
+    "cwe": [
+      "CWE-200"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A05",
+    "owasp_api_2023": "API9",
+    "service": "graphql-svc",
+    "url": "/graphql",
+    "method": "POST",
+    "parameter": "query",
+    "parameter_location": "json",
+    "type": "field-suggestion",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "config",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Unknown field names produce did-you-mean hints"
+    },
+    "references": [],
+    "tags": [
+      "graphql",
+      "info-leak"
+    ]
+  },
+  {
+    "id": "GQL-003",
+    "name": "Unbounded query batching",
+    "cwe": [
+      "CWE-770"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A04",
+    "owasp_api_2023": "API4",
+    "service": "graphql-svc",
+    "url": "/graphql",
+    "method": "POST",
+    "parameter": "query",
+    "parameter_location": "json",
+    "type": "query-batching",
+    "difficulty": 2,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "logic",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "A batch array with hundreds of operations is executed in one request"
+    },
+    "references": [],
+    "tags": [
+      "graphql",
+      "dos",
+      "batching"
+    ]
+  },
+  {
+    "id": "GQL-004",
+    "name": "OTP verification without attempt limit",
+    "cwe": [
+      "CWE-307"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A04",
+    "owasp_api_2023": "API4",
+    "service": "graphql-svc",
+    "url": "/graphql",
+    "method": "POST",
+    "parameter": "code",
+    "parameter_location": "json",
+    "type": "otp-bruteforce",
+    "difficulty": 2,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "logic",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Alias-based brute force verifies the OTP with no lockout"
+    },
+    "references": [],
+    "tags": [
+      "graphql",
+      "auth",
+      "rate-limit"
+    ]
+  },
+  {
+    "id": "GQL-005",
+    "name": "No query complexity limit allows alias amplification",
+    "cwe": [
+      "CWE-770"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A04",
+    "owasp_api_2023": "API4",
+    "service": "graphql-svc",
+    "url": "/graphql",
+    "method": "POST",
+    "parameter": "query",
+    "parameter_location": "json",
+    "type": "depth-dos",
+    "difficulty": 2,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "logic",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "A single query with hundreds of aliases is accepted and executed"
+    },
+    "references": [],
+    "tags": [
+      "graphql",
+      "dos"
+    ]
+  },
+  {
+    "id": "GQL-006",
+    "name": "BOLA in GraphQL user resolver",
+    "cwe": [
+      "CWE-639"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A01",
+    "owasp_api_2023": "API1",
+    "service": "graphql-svc",
+    "url": "/graphql",
+    "method": "POST",
+    "parameter": "id",
+    "parameter_location": "json",
+    "type": "bola",
+    "difficulty": 1,
+    "auth_required": true,
+    "preconditions": [],
+    "detection_class": "api",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "user(id:) returns another user's SSN without an ownership check"
+    },
+    "references": [],
+    "tags": [
+      "graphql",
+      "access-control",
+      "bola"
+    ]
+  },
+  {
+    "id": "IDOR-001",
+    "name": "IDOR: any authenticated user can read any order",
+    "cwe": [
+      "CWE-639"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A01",
+    "owasp_api_2023": null,
+    "service": "php-web",
+    "url": "/php/idor/order.php",
+    "method": "GET",
+    "parameter": "id",
+    "parameter_location": "query",
+    "type": "idor",
+    "difficulty": 1,
+    "auth_required": true,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Order belonging to another user is returned when its sequential id is requested"
+    },
+    "references": [],
+    "tags": [
+      "access-control",
+      "idor",
+      "api"
+    ]
+  },
+  {
+    "id": "IDOR-002",
+    "name": "IDOR: profile endpoint exposes arbitrary user records",
+    "cwe": [
+      "CWE-639"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A01",
+    "owasp_api_2023": null,
+    "service": "php-web",
+    "url": "/php/idor/profile.php",
+    "method": "GET",
+    "parameter": "user_id",
+    "parameter_location": "query",
+    "type": "idor",
+    "difficulty": 1,
+    "auth_required": true,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Requesting another user's id returns their email and role"
+    },
+    "references": [],
+    "tags": [
+      "access-control",
+      "idor",
+      "data-exposure"
+    ]
+  },
+  {
+    "id": "INFO-001",
+    "name": "robots.txt discloses sensitive application paths",
+    "cwe": [
+      "CWE-200"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A05",
+    "owasp_api_2023": null,
+    "service": "php-web",
+    "url": "/php/robots.txt",
+    "method": "GET",
+    "parameter": "none",
+    "parameter_location": "path",
+    "type": "robots-disclosure",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "passive",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Disallow entries reveal admin, upload and backup paths"
+    },
+    "references": [],
+    "tags": [
+      "misconfiguration",
+      "info-leak",
+      "discovery"
+    ]
+  },
+  {
+    "id": "JAVA-001",
+    "name": "XXE in XML import endpoint",
+    "cwe": [
+      "CWE-611"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A05",
+    "owasp_api_2023": null,
+    "service": "spring-svc",
+    "url": "/java/xxe",
+    "method": "POST",
+    "parameter": "body",
+    "parameter_location": "body",
+    "type": "xxe",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "External entity is resolved and file contents appear in the response"
+    },
+    "references": [],
+    "tags": [
+      "xxe",
+      "xml",
+      "injection"
+    ]
+  },
+  {
+    "id": "JAVA-002",
+    "name": "XMLDecoder deserialization enables method invocation",
+    "cwe": [
+      "CWE-502"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A08",
+    "owasp_api_2023": null,
+    "service": "spring-svc",
+    "url": "/java/deserialize",
+    "method": "POST",
+    "parameter": "data",
+    "parameter_location": "body",
+    "type": "insecure-deserialization",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "XMLDecoder executes a method call supplied by the client"
+    },
+    "references": [],
+    "tags": [
+      "deserialization",
+      "xml",
+      "rce"
+    ]
+  },
+  {
+    "id": "JAVA-003",
+    "name": "Expression language injection in template renderer",
+    "cwe": [
+      "CWE-917"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A03",
+    "owasp_api_2023": null,
+    "service": "spring-svc",
+    "url": "/java/template",
+    "method": "GET",
+    "parameter": "name",
+    "parameter_location": "query",
+    "type": "el-injection",
+    "difficulty": 2,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "The file: expression resolver reads arbitrary files"
+    },
+    "references": [],
+    "tags": [
+      "injection",
+      "el",
+      "ssti"
+    ]
+  },
+  {
+    "id": "JAVA-004",
+    "name": "Log4Shell-style JNDI lookup performed on log input",
+    "cwe": [
+      "CWE-917"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A03",
+    "owasp_api_2023": null,
+    "service": "spring-svc",
+    "url": "/java/log",
+    "method": "GET",
+    "parameter": "msg",
+    "parameter_location": "query",
+    "type": "jndi-lookup",
+    "difficulty": 2,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": true,
+    "exploit_proof": {
+      "kind": "oob",
+      "description": "A ${jndi:...} payload triggers an out-of-band lookup callback"
+    },
+    "references": [],
+    "tags": [
+      "injection",
+      "jndi",
+      "oob"
+    ]
+  },
+  {
+    "id": "JAVA-005",
+    "name": "Path traversal in document download",
+    "cwe": [
+      "CWE-22"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A01",
+    "owasp_api_2023": null,
+    "service": "spring-svc",
+    "url": "/java/download",
+    "method": "GET",
+    "parameter": "file",
+    "parameter_location": "query",
+    "type": "path-traversal",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Arbitrary files can be read through the file parameter"
+    },
+    "references": [],
+    "tags": [
+      "file",
+      "traversal"
+    ]
+  },
+  {
+    "id": "JAVA-006",
+    "name": "Actuator environment endpoint exposes secrets",
+    "cwe": [
+      "CWE-200"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A05",
+    "owasp_api_2023": null,
+    "service": "spring-svc",
+    "url": "/java/actuator/env",
+    "method": "GET",
+    "parameter": "none",
+    "parameter_location": "path",
+    "type": "actuator-exposure",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "config",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Environment variables and application properties are returned without authentication"
+    },
+    "references": [],
+    "tags": [
+      "misconfiguration",
+      "info-leak",
+      "actuator"
+    ]
+  },
+  {
+    "id": "JAVA-007",
+    "name": "DES/ECB encryption with a hard-coded key",
+    "cwe": [
+      "CWE-327"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A02",
+    "owasp_api_2023": null,
+    "service": "spring-svc",
+    "url": "/java/encrypt",
+    "method": "POST",
+    "parameter": "data",
+    "parameter_location": "body",
+    "type": "weak-crypto",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "config",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Response reports DES/ECB with a static key"
+    },
+    "references": [],
+    "tags": [
+      "crypto",
+      "weak-cipher"
+    ]
+  },
+  {
+    "id": "JAVA-008",
+    "name": "Command injection in maintenance runner",
+    "cwe": [
+      "CWE-78"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A03",
+    "owasp_api_2023": null,
+    "service": "spring-svc",
+    "url": "/java/exec",
+    "method": "GET",
+    "parameter": "cmd",
+    "parameter_location": "query",
+    "type": "os-command",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Shell metacharacters execute and their output is returned"
+    },
+    "references": [],
+    "tags": [
+      "injection",
+      "command",
+      "rce"
+    ]
+  },
+  {
+    "id": "JAVA-009",
+    "name": "Open redirect in logout handler",
+    "cwe": [
+      "CWE-601"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A01",
+    "owasp_api_2023": null,
+    "service": "spring-svc",
+    "url": "/java/go",
+    "method": "GET",
+    "parameter": "url",
+    "parameter_location": "query",
+    "type": "open-redirect",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "The Location header points to an arbitrary external host"
+    },
+    "references": [],
+    "tags": [
+      "redirect"
+    ]
+  },
+  {
+    "id": "JAVA-010",
+    "name": "Stack trace disclosure on application error",
+    "cwe": [
+      "CWE-209"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A05",
+    "owasp_api_2023": null,
+    "service": "spring-svc",
+    "url": "/java/stack",
+    "method": "GET",
+    "parameter": "input",
+    "parameter_location": "query",
+    "type": "verbose-error",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "config",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Response contains the exception class, message and stack frames"
+    },
+    "references": [],
+    "tags": [
+      "misconfiguration",
+      "info-leak"
+    ]
+  },
+  {
+    "id": "LEG-001",
+    "name": "End-of-life jQuery 1.8.3 shipped to clients",
+    "cwe": [
+      "CWE-1104"
+    ],
+    "cve": [
+      "CVE-2012-6708",
+      "CVE-2015-9251"
+    ],
+    "owasp_web_2021": "A06",
+    "owasp_api_2023": null,
+    "service": "legacy-svc",
+    "url": "/legacy/",
+    "method": "GET",
+    "parameter": "none",
+    "parameter_location": "path",
+    "type": "outdated-component",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "sca",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "The page references jquery-1.8.3.min.js, a version with known XSS CVEs"
+    },
+    "references": [],
+    "tags": [
+      "sca",
+      "outdated",
+      "jquery"
+    ]
+  },
+  {
+    "id": "LEG-002",
+    "name": "Backup configuration file publicly readable",
+    "cwe": [
+      "CWE-538"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A05",
+    "owasp_api_2023": null,
+    "service": "legacy-svc",
+    "url": "/legacy/config.php.bak",
+    "method": "GET",
+    "parameter": "none",
+    "parameter_location": "path",
+    "type": "backup-file",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "config",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "config.php.bak contains database credentials"
+    },
+    "references": [],
+    "tags": [
+      "misconfiguration",
+      "info-leak",
+      "backup"
+    ]
+  },
+  {
+    "id": "LEG-003",
+    "name": "Exposed .git metadata allows source reconstruction",
+    "cwe": [
+      "CWE-527"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A05",
+    "owasp_api_2023": null,
+    "service": "legacy-svc",
+    "url": "/legacy/.git/config",
+    "method": "GET",
+    "parameter": "none",
+    "parameter_location": "path",
+    "type": "vcs-exposure",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "config",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": ".git/config is served with the repository remote and local paths"
+    },
+    "references": [],
+    "tags": [
+      "misconfiguration",
+      "info-leak",
+      "git"
+    ]
+  },
+  {
+    "id": "LEG-004",
+    "name": "Directory listing exposes database dumps",
+    "cwe": [
+      "CWE-548"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A05",
+    "owasp_api_2023": null,
+    "service": "legacy-svc",
+    "url": "/legacy/backup/",
+    "method": "GET",
+    "parameter": "none",
+    "parameter_location": "path",
+    "type": "directory-listing",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "config",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Apache style index lists SQL and archive backups"
+    },
+    "references": [],
+    "tags": [
+      "misconfiguration",
+      "info-leak",
+      "directory-listing"
+    ]
+  },
+  {
+    "id": "LEG-005",
+    "name": "Default administrative credentials admin/admin",
+    "cwe": [
+      "CWE-1392"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A07",
+    "owasp_api_2023": null,
+    "service": "legacy-svc",
+    "url": "/legacy/admin/login.php",
+    "method": "POST",
+    "parameter": "username",
+    "parameter_location": "body",
+    "type": "default-credentials",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "admin/admin authenticates and returns an administrative session"
+    },
+    "references": [],
+    "tags": [
+      "auth",
+      "default-credentials"
+    ]
+  },
+  {
+    "id": "LEG-006",
+    "name": "Server banner discloses end-of-life software versions",
+    "cwe": [
+      "CWE-200"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A05",
+    "owasp_api_2023": null,
+    "service": "legacy-svc",
+    "url": "/legacy/banner",
+    "method": "GET",
+    "parameter": "none",
+    "parameter_location": "path",
+    "type": "banner-disclosure",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "config",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Server header reports Apache 2.2.15 and PHP 5.3.3"
+    },
+    "references": [],
+    "tags": [
+      "misconfiguration",
+      "info-leak",
+      "banner"
+    ]
+  },
+  {
+    "id": "LEG-007",
+    "name": "WordPress readme reveals the CMS version",
+    "cwe": [
+      "CWE-200"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A06",
+    "owasp_api_2023": null,
+    "service": "legacy-svc",
+    "url": "/legacy/readme.html",
+    "method": "GET",
+    "parameter": "none",
+    "parameter_location": "path",
+    "type": "cms-version-disclosure",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "sca",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "readme.html states WordPress 4.1, a version with known vulnerabilities"
+    },
+    "references": [],
+    "tags": [
+      "sca",
+      "info-leak",
+      "wordpress"
+    ]
+  },
+  {
+    "id": "LFI-001",
+    "name": "Path traversal in page loader",
+    "cwe": [
+      "CWE-22"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A01",
+    "owasp_api_2023": null,
+    "service": "php-web",
+    "url": "/php/lfi/read.php",
+    "method": "GET",
+    "parameter": "file",
+    "parameter_location": "query",
+    "type": "path-traversal",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Arbitrary files such as /etc/passwd can be read"
+    },
+    "references": [],
+    "tags": [
+      "file",
+      "lfi",
+      "traversal"
+    ]
+  },
+  {
+    "id": "OAUTH-001",
+    "name": "OAuth redirect_uri is not validated",
+    "cwe": [
+      "CWE-601"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A01",
+    "owasp_api_2023": null,
+    "service": "auth-svc",
+    "url": "/auth/authorize",
+    "method": "GET",
+    "parameter": "redirect_uri",
+    "parameter_location": "query",
+    "type": "open-redirect-uri",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Authorization code is delivered to an attacker-controlled redirect_uri"
+    },
+    "references": [],
+    "tags": [
+      "oauth",
+      "redirect",
+      "authorization"
+    ]
+  },
+  {
+    "id": "OAUTH-002",
+    "name": "OAuth authorization request does not require state",
+    "cwe": [
+      "CWE-352"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A01",
+    "owasp_api_2023": null,
+    "service": "auth-svc",
+    "url": "/auth/authorize",
+    "method": "GET",
+    "parameter": "state",
+    "parameter_location": "query",
+    "type": "missing-state",
+    "difficulty": 2,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Authorization succeeds without a state parameter, enabling login CSRF"
+    },
+    "references": [],
+    "tags": [
+      "oauth",
+      "csrf",
+      "state"
+    ]
+  },
+  {
+    "id": "OAUTH-003",
+    "name": "Implicit flow returns the access token in the fragment",
+    "cwe": [
+      "CWE-598"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A07",
+    "owasp_api_2023": null,
+    "service": "auth-svc",
+    "url": "/auth/implicit",
+    "method": "GET",
+    "parameter": "redirect_uri",
+    "parameter_location": "query",
+    "type": "implicit-flow",
+    "difficulty": 2,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Location header contains #access_token=..."
+    },
+    "references": [],
+    "tags": [
+      "oauth",
+      "implicit",
+      "token-leak"
+    ]
+  },
+  {
+    "id": "OAUTH-004",
+    "name": "Token endpoint does not require PKCE",
+    "cwe": [
+      "CWE-287"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A07",
+    "owasp_api_2023": null,
+    "service": "auth-svc",
+    "url": "/auth/token",
+    "method": "POST",
+    "parameter": "code",
+    "parameter_location": "body",
+    "type": "missing-pkce",
+    "difficulty": 2,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "An authorization code is exchanged without any code_verifier"
+    },
+    "references": [],
+    "tags": [
+      "oauth",
+      "pkce",
+      "authorization"
+    ]
+  },
+  {
+    "id": "OAUTH-005",
+    "name": "Scope escalation accepted without consent",
+    "cwe": [
+      "CWE-269"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A01",
+    "owasp_api_2023": null,
+    "service": "auth-svc",
+    "url": "/auth/scope",
+    "method": "GET",
+    "parameter": "scope",
+    "parameter_location": "query",
+    "type": "scope-escalation",
+    "difficulty": 2,
+    "auth_required": true,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Requesting admin scope returns an admin token for a normal user"
+    },
+    "references": [],
+    "tags": [
+      "oauth",
+      "scope",
+      "privilege-escalation"
+    ]
+  },
+  {
+    "id": "OAUTH-006",
+    "name": "SAML assertion accepted without signature validation",
+    "cwe": [
+      "CWE-347"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A07",
+    "owasp_api_2023": null,
+    "service": "auth-svc",
+    "url": "/auth/saml/acs",
+    "method": "POST",
+    "parameter": "SAMLResponse",
+    "parameter_location": "body",
+    "type": "saml-unsigned",
+    "difficulty": 2,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "An unsigned assertion is accepted and grants the admin role"
+    },
+    "references": [],
+    "tags": [
+      "saml",
+      "auth",
+      "signature"
+    ]
+  },
+  {
+    "id": "OAUTH-007",
+    "name": "Username enumeration in the login endpoint",
+    "cwe": [
+      "CWE-204"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A07",
+    "owasp_api_2023": null,
+    "service": "auth-svc",
+    "url": "/auth/login",
+    "method": "POST",
+    "parameter": "username",
+    "parameter_location": "body",
+    "type": "user-enumeration",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "passive",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Unknown users and wrong passwords produce different messages"
+    },
+    "references": [],
+    "tags": [
+      "auth",
+      "enumeration",
+      "info-leak"
+    ]
+  },
+  {
+    "id": "PY-001",
+    "name": "Server-side template injection in greeting renderer",
+    "cwe": [
+      "CWE-1336"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A03",
+    "owasp_api_2023": null,
+    "service": "flask-svc",
+    "url": "/py/ssti",
+    "method": "GET",
+    "parameter": "name",
+    "parameter_location": "query",
+    "type": "ssti",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Jinja2 expression such as {{7*7}} is evaluated in the response"
+    },
+    "references": [],
+    "tags": [
+      "injection",
+      "ssti",
+      "template"
+    ]
+  },
+  {
+    "id": "PY-002",
+    "name": "Insecure pickle deserialization of session payload",
+    "cwe": [
+      "CWE-502"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A08",
+    "owasp_api_2023": null,
+    "service": "flask-svc",
+    "url": "/py/pickle",
+    "method": "POST",
+    "parameter": "data",
+    "parameter_location": "body",
+    "type": "insecure-deserialization",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "A crafted pickle payload is deserialized and executes arbitrary Python"
+    },
+    "references": [],
+    "tags": [
+      "deserialization",
+      "pickle",
+      "rce"
+    ]
+  },
+  {
+    "id": "PY-003",
+    "name": "yaml.load on untrusted input enables object construction",
+    "cwe": [
+      "CWE-502"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A08",
+    "owasp_api_2023": null,
+    "service": "flask-svc",
+    "url": "/py/yaml",
+    "method": "POST",
+    "parameter": "config",
+    "parameter_location": "body",
+    "type": "unsafe-yaml",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "YAML tags such as !!python/object/apply are honoured by yaml.load"
+    },
+    "references": [],
+    "tags": [
+      "deserialization",
+      "yaml"
+    ]
+  },
+  {
+    "id": "PY-004",
+    "name": "Path traversal in report download",
+    "cwe": [
+      "CWE-22"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A01",
+    "owasp_api_2023": null,
+    "service": "flask-svc",
+    "url": "/py/download",
+    "method": "GET",
+    "parameter": "file",
+    "parameter_location": "query",
+    "type": "path-traversal",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Arbitrary files such as /etc/passwd are returned"
+    },
+    "references": [],
+    "tags": [
+      "file",
+      "traversal",
+      "download"
+    ]
+  },
+  {
+    "id": "PY-005",
+    "name": "SSRF in URL preview endpoint",
+    "cwe": [
+      "CWE-918"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A10",
+    "owasp_api_2023": null,
+    "service": "flask-svc",
+    "url": "/py/fetch",
+    "method": "GET",
+    "parameter": "url",
+    "parameter_location": "query",
+    "type": "ssrf",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Internal metadata service is fetched and returned to the client"
+    },
+    "references": [],
+    "tags": [
+      "ssrf"
+    ]
+  },
+  {
+    "id": "PY-006",
+    "name": "OS command injection in host checker",
+    "cwe": [
+      "CWE-78"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A03",
+    "owasp_api_2023": null,
+    "service": "flask-svc",
+    "url": "/py/ping",
+    "method": "GET",
+    "parameter": "host",
+    "parameter_location": "query",
+    "type": "os-command",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Shell metacharacters execute and their output is returned"
+    },
+    "references": [],
+    "tags": [
+      "injection",
+      "command",
+      "rce"
+    ]
+  },
+  {
+    "id": "PY-007",
+    "name": "Werkzeug debugger console reachable",
+    "cwe": [
+      "CWE-94"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A05",
+    "owasp_api_2023": null,
+    "service": "flask-svc",
+    "url": "/py/console",
+    "method": "GET",
+    "parameter": "none",
+    "parameter_location": "path",
+    "type": "debug-console",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "config",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Interactive traceback console page is served with the PIN hint and stack frame list"
+    },
+    "references": [],
+    "tags": [
+      "misconfiguration",
+      "debug",
+      "rce"
+    ]
+  },
+  {
+    "id": "PY-008",
+    "name": "Open redirect after login",
+    "cwe": [
+      "CWE-601"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A01",
+    "owasp_api_2023": null,
+    "service": "flask-svc",
+    "url": "/py/redirect",
+    "method": "GET",
+    "parameter": "next",
+    "parameter_location": "query",
+    "type": "open-redirect",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Location header points to an arbitrary external host"
+    },
+    "references": [],
+    "tags": [
+      "redirect"
+    ]
+  },
+  {
+    "id": "PY-009",
+    "name": "Predictable password reset token",
+    "cwe": [
+      "CWE-330"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A02",
+    "owasp_api_2023": null,
+    "service": "flask-svc",
+    "url": "/py/reset_token",
+    "method": "GET",
+    "parameter": "user",
+    "parameter_location": "query",
+    "type": "weak-random",
+    "difficulty": 2,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Repeated requests with the same seed produce the same predictable token sequence"
+    },
+    "references": [],
+    "tags": [
+      "crypto",
+      "random",
+      "token"
+    ]
+  },
+  {
+    "id": "PY-010",
+    "name": "Session cookie without security flags",
+    "cwe": [
+      "CWE-614"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A07",
+    "owasp_api_2023": null,
+    "service": "flask-svc",
+    "url": "/py/login",
+    "method": "GET",
+    "parameter": "session",
+    "parameter_location": "cookie",
+    "type": "insecure-cookie",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "config",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Set-Cookie lacks HttpOnly, Secure and SameSite attributes"
+    },
+    "references": [],
+    "tags": [
+      "auth",
+      "session",
+      "cookie"
+    ]
+  },
+  {
+    "id": "PY-011",
+    "name": "Catastrophic backtracking in email validator",
+    "cwe": [
+      "CWE-1333"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A04",
+    "owasp_api_2023": null,
+    "service": "flask-svc",
+    "url": "/py/validate",
+    "method": "GET",
+    "parameter": "email",
+    "parameter_location": "query",
+    "type": "redos",
+    "difficulty": 2,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "diff",
+      "description": "Crafted input causes regex evaluation to take several seconds"
+    },
+    "references": [],
+    "tags": [
+      "dos",
+      "regex",
+      "redos"
+    ]
+  },
+  {
+    "id": "REDIR-001",
+    "name": "Open redirect in post-login navigation",
+    "cwe": [
+      "CWE-601"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A01",
+    "owasp_api_2023": null,
+    "service": "php-web",
+    "url": "/php/redirect/redirect.php",
+    "method": "GET",
+    "parameter": "next",
+    "parameter_location": "query",
+    "type": "open-redirect",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Location header points to an arbitrary external host supplied by the client"
+    },
+    "references": [],
+    "tags": [
+      "redirect",
+      "client"
+    ]
+  },
+  {
+    "id": "SQLI-001",
+    "name": "Error-based SQL Injection in product lookup",
+    "cwe": [
+      "CWE-89"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A03",
+    "owasp_api_2023": null,
+    "service": "php-web",
+    "url": "/php/sqli/products.php",
+    "method": "GET",
+    "parameter": "id",
+    "parameter_location": "query",
+    "type": "error-based",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "MySQL error message or version() output visible in response"
+    },
+    "references": [],
+    "tags": [
+      "injection",
+      "database",
+      "mysql"
+    ]
+  },
+  {
+    "id": "SQLI-002",
+    "name": "Union-based SQL Injection in product search",
+    "cwe": [
+      "CWE-89"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A03",
+    "owasp_api_2023": null,
+    "service": "php-web",
+    "url": "/php/sqli/search.php",
+    "method": "GET",
+    "parameter": "q",
+    "parameter_location": "query",
+    "type": "union-based",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "UNION SELECT output visible alongside product results"
+    },
+    "references": [],
+    "tags": [
+      "injection",
+      "database",
+      "mysql",
+      "union"
+    ]
+  },
+  {
+    "id": "SQLI-003",
+    "name": "Boolean-blind SQL Injection in product lookup",
+    "cwe": [
+      "CWE-89"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A03",
+    "owasp_api_2023": null,
+    "service": "php-web",
+    "url": "/php/sqli/blind.php",
+    "method": "GET",
+    "parameter": "id",
+    "parameter_location": "query",
+    "type": "boolean-blind",
+    "difficulty": 2,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "diff",
+      "description": "Response body differs for true vs false conditions (product found vs not found)"
+    },
+    "references": [],
+    "tags": [
+      "injection",
+      "database",
+      "mysql",
+      "blind"
+    ]
+  },
+  {
+    "id": "SQLI-004",
+    "name": "Time-based blind SQL Injection in product lookup",
+    "cwe": [
+      "CWE-89"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A03",
+    "owasp_api_2023": null,
+    "service": "php-web",
+    "url": "/php/sqli/time_blind.php",
+    "method": "GET",
+    "parameter": "id",
+    "parameter_location": "query",
+    "type": "time-based-blind",
+    "difficulty": 2,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "diff",
+      "description": "Response time ≥5s when condition is true (SLEEP injected)"
+    },
+    "references": [],
+    "tags": [
+      "injection",
+      "database",
+      "mysql",
+      "blind",
+      "time"
+    ]
+  },
+  {
+    "id": "SQLI-005",
+    "name": "ORDER BY SQL Injection in product sorting",
+    "cwe": [
+      "CWE-89"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A03",
+    "owasp_api_2023": null,
+    "service": "php-web",
+    "url": "/php/sqli/order.php",
+    "method": "GET",
+    "parameter": "sort",
+    "parameter_location": "query",
+    "type": "order-by-injection",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Column index-based UNION or error triggers on arbitrary ORDER BY value"
+    },
+    "references": [],
+    "tags": [
+      "injection",
+      "database",
+      "mysql",
+      "order-by"
+    ]
+  },
+  {
+    "id": "SQLI-006",
+    "name": "Second-order SQL Injection in user password change",
+    "cwe": [
+      "CWE-89"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A03",
+    "owasp_api_2023": null,
+    "service": "php-web",
+    "url": "/php/sqli/second_order.php",
+    "method": "POST",
+    "parameter": "username",
+    "parameter_location": "body",
+    "type": "second-order",
+    "difficulty": 3,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Payload stored through a prepared INSERT is later spliced unescaped into an UPDATE"
+    },
+    "references": [],
+    "tags": [
+      "injection",
+      "database",
+      "mysql",
+      "second-order"
+    ]
+  },
+  {
+    "id": "SQLI-007",
+    "name": "Header-based SQL Injection via X-Forwarded-For",
+    "cwe": [
+      "CWE-89"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A03",
+    "owasp_api_2023": null,
+    "service": "php-web",
+    "url": "/php/sqli/header_inject.php",
+    "method": "GET",
+    "parameter": "X-Forwarded-For",
+    "parameter_location": "header",
+    "type": "header-injection",
+    "difficulty": 2,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "passive",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "X-Forwarded-For header value injected into access log query, error or data visible"
+    },
+    "references": [],
+    "tags": [
+      "injection",
+      "database",
+      "mysql",
+      "header"
+    ]
+  },
+  {
+    "id": "UPLOAD-001",
+    "name": "Unrestricted file upload leads to code execution",
+    "cwe": [
+      "CWE-434"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A08",
+    "owasp_api_2023": null,
+    "service": "php-web",
+    "url": "/php/upload/upload.php",
+    "method": "POST",
+    "parameter": "file",
+    "parameter_location": "multipart",
+    "type": "unrestricted-upload",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "An uploaded .php file is stored under the web root and executes when requested"
+    },
+    "references": [],
+    "tags": [
+      "file",
+      "upload",
+      "rce"
+    ]
+  },
+  {
+    "id": "XSS-001",
+    "name": "Reflected XSS in greeting page",
+    "cwe": [
+      "CWE-79"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A03",
+    "owasp_api_2023": null,
+    "service": "php-web",
+    "url": "/php/xss/reflected.php",
+    "method": "GET",
+    "parameter": "name",
+    "parameter_location": "query",
+    "type": "reflected",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Raw script markup appears unencoded in the HTML response"
+    },
+    "references": [],
+    "tags": [
+      "xss",
+      "client",
+      "reflected"
+    ]
+  },
+  {
+    "id": "XSS-002",
+    "name": "Stored XSS in product comments",
+    "cwe": [
+      "CWE-79"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A03",
+    "owasp_api_2023": null,
+    "service": "php-web",
+    "url": "/php/xss/stored.php",
+    "method": "POST",
+    "parameter": "body",
+    "parameter_location": "body",
+    "type": "stored",
+    "difficulty": 1,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "active",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Comment markup is rendered without encoding on subsequent GET requests"
+    },
+    "references": [],
+    "tags": [
+      "xss",
+      "client",
+      "stored"
+    ]
+  },
+  {
+    "id": "XSS-003",
+    "name": "DOM-based XSS through location.hash",
+    "cwe": [
+      "CWE-79"
+    ],
+    "cve": [],
+    "owasp_web_2021": "A03",
+    "owasp_api_2023": null,
+    "service": "php-web",
+    "url": "/php/xss/dom.php",
+    "method": "GET",
+    "parameter": "hash",
+    "parameter_location": "fragment",
+    "type": "dom",
+    "difficulty": 2,
+    "auth_required": false,
+    "preconditions": [],
+    "detection_class": "passive",
+    "needs_oob": false,
+    "exploit_proof": {
+      "kind": "marker",
+      "description": "Fragment content is assigned to innerHTML without sanitisation"
+    },
+    "references": [],
+    "tags": [
+      "xss",
+      "client",
+      "dom"
+    ]
+  }
+]

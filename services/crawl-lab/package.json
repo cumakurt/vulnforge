@@ -1,0 +1,9 @@
+{
+  "name": "vulnforge-crawl-lab",
+  "version": "1.0.0",
+  "description": "Crawl coverage lab (SPA, discovery surface, soft-404, SSE)",
+  "license": "AGPL-3.0-only",
+  "author": "Cuma KURT <cumakurt@gmail.com>",
+  "private": true,
+  "main": "src/server.js"
+}

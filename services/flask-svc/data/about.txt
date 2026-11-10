@@ -1,0 +1,4 @@
+About flask-svc
+
+This service exists so that path traversal and template injection findings have
+a realistic baseline target.

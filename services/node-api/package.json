@@ -1,0 +1,12 @@
+{
+  "name": "vulnforge-node-api",
+  "version": "1.0.0",
+  "description": "Intentionally vulnerable REST API used for scanner benchmarking",
+  "license": "AGPL-3.0-only",
+  "author": "Cuma KURT <cumakurt@gmail.com>",
+  "private": true,
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=20"
+  }
+}

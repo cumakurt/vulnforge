@@ -1,0 +1,794 @@
+[
+  {
+    "id": "API-001-C",
+    "twin_of": "API-001",
+    "url": "/api/v2/orders/1",
+    "method": "GET",
+    "parameter": "id",
+    "expected": "no-finding"
+  },
+  {
+    "id": "API-002-C",
+    "twin_of": "API-002",
+    "url": "/api/v2/users/1",
+    "method": "GET",
+    "parameter": "id",
+    "expected": "no-finding"
+  },
+  {
+    "id": "API-003-C",
+    "twin_of": "API-003",
+    "url": "/api/v2/users/1",
+    "method": "DELETE",
+    "parameter": "id",
+    "expected": "no-finding"
+  },
+  {
+    "id": "API-004-C",
+    "twin_of": "API-004",
+    "url": "/api/v2/users/2",
+    "method": "PUT",
+    "parameter": "role",
+    "expected": "no-finding"
+  },
+  {
+    "id": "API-005-C",
+    "twin_of": "API-005",
+    "url": "/api/v2/login",
+    "method": "POST",
+    "parameter": "username",
+    "expected": "no-finding"
+  },
+  {
+    "id": "API-006-C",
+    "twin_of": "API-006",
+    "url": "/api/v2/auth/whoami",
+    "method": "GET",
+    "parameter": "Authorization",
+    "expected": "no-finding"
+  },
+  {
+    "id": "API-007-C",
+    "twin_of": "API-007",
+    "url": "/api/v2/auth/impersonate",
+    "method": "GET",
+    "parameter": "username",
+    "expected": "no-finding"
+  },
+  {
+    "id": "API-008-C",
+    "twin_of": "API-008",
+    "url": "/api/v2/settings",
+    "method": "POST",
+    "parameter": "__proto__",
+    "expected": "no-finding"
+  },
+  {
+    "id": "API-009-C",
+    "twin_of": "API-009",
+    "url": "/api/v2/webhook/fetch",
+    "method": "POST",
+    "parameter": "url",
+    "expected": "no-finding"
+  },
+  {
+    "id": "API-010-C",
+    "twin_of": "API-010",
+    "url": "/api/v2/products",
+    "method": "GET",
+    "parameter": "limit",
+    "expected": "no-finding"
+  },
+  {
+    "id": "API-011-C",
+    "twin_of": "API-011",
+    "url": "/api/v2/export",
+    "method": "GET",
+    "parameter": "api_key",
+    "expected": "no-finding"
+  },
+  {
+    "id": "API-012-C",
+    "twin_of": "API-012",
+    "url": "/api/v2/internal/debug",
+    "method": "GET",
+    "parameter": "none",
+    "expected": "no-finding"
+  },
+  {
+    "id": "API-013-C",
+    "twin_of": "API-013",
+    "url": "/api/v2/cors-test",
+    "method": "GET",
+    "parameter": "Origin",
+    "expected": "no-finding"
+  },
+  {
+    "id": "API-014-C",
+    "twin_of": "API-014",
+    "url": "/api/v2/auth/login",
+    "method": "POST",
+    "parameter": "password",
+    "expected": "no-finding"
+  },
+  {
+    "id": "AUTH-001-C",
+    "twin_of": "AUTH-001",
+    "url": "/php/auth/login_safe.php",
+    "method": "POST",
+    "parameter": "username",
+    "expected": "no-finding"
+  },
+  {
+    "id": "AUTH-002-C",
+    "twin_of": "AUTH-002",
+    "url": "/php/auth/login_safe.php",
+    "method": "POST",
+    "parameter": "PHPSESSID",
+    "expected": "no-finding"
+  },
+  {
+    "id": "AUTH-003-C",
+    "twin_of": "AUTH-003",
+    "url": "/php/auth/login_safe.php",
+    "method": "POST",
+    "parameter": "username",
+    "expected": "no-finding"
+  },
+  {
+    "id": "AUTH-004-C",
+    "twin_of": "AUTH-004",
+    "url": "/php/auth/logout_safe.php",
+    "method": "GET",
+    "parameter": "PHPSESSID",
+    "expected": "no-finding"
+  },
+  {
+    "id": "CMDI-001-C",
+    "twin_of": "CMDI-001",
+    "url": "/php/cmdi/ping_safe.php",
+    "method": "GET",
+    "parameter": "host",
+    "expected": "no-finding"
+  },
+  {
+    "id": "CMDI-002-C",
+    "twin_of": "CMDI-002",
+    "url": "/php/cmdi/blind_safe.php",
+    "method": "GET",
+    "parameter": "host",
+    "expected": "no-finding"
+  },
+  {
+    "id": "CONF-001-C",
+    "twin_of": "CONF-001",
+    "url": "/php/config/debug_safe.php",
+    "method": "GET",
+    "parameter": "input",
+    "expected": "no-finding"
+  },
+  {
+    "id": "CONF-002-C",
+    "twin_of": "CONF-002",
+    "url": "/php/config/phpinfo_safe.php",
+    "method": "GET",
+    "parameter": "section",
+    "expected": "no-finding"
+  },
+  {
+    "id": "CRAWL-001-C",
+    "twin_of": "CRAWL-001",
+    "url": "/spa/robots_safe.txt",
+    "method": "GET",
+    "parameter": "none",
+    "expected": "no-finding"
+  },
+  {
+    "id": "CRAWL-002-C",
+    "twin_of": "CRAWL-002",
+    "url": "/spa/app_safe.js.map",
+    "method": "GET",
+    "parameter": "none",
+    "expected": "no-finding"
+  },
+  {
+    "id": "CRAWL-003-C",
+    "twin_of": "CRAWL-003",
+    "url": "/spa/app_safe.js",
+    "method": "GET",
+    "parameter": "none",
+    "expected": "no-finding"
+  },
+  {
+    "id": "CRAWL-004-C",
+    "twin_of": "CRAWL-004",
+    "url": "/spa/not-found-safe-404",
+    "method": "GET",
+    "parameter": "path",
+    "expected": "no-finding"
+  },
+  {
+    "id": "CRAWL-005-C",
+    "twin_of": "CRAWL-005",
+    "url": "/spa/api/products_safe",
+    "method": "GET",
+    "parameter": "page",
+    "expected": "no-finding"
+  },
+  {
+    "id": "CRAWL-006-C",
+    "twin_of": "CRAWL-006",
+    "url": "/spa/ws-ticket_safe",
+    "method": "GET",
+    "parameter": "Origin",
+    "expected": "no-finding"
+  },
+  {
+    "id": "CRAWL-007-C",
+    "twin_of": "CRAWL-007",
+    "url": "/spa/events_safe",
+    "method": "GET",
+    "parameter": "none",
+    "expected": "no-finding"
+  },
+  {
+    "id": "CRAWL-008-C",
+    "twin_of": "CRAWL-008",
+    "url": "/spa/panel_safe",
+    "method": "GET",
+    "parameter": "none",
+    "expected": "no-finding"
+  },
+  {
+    "id": "CRYPTO-001-C",
+    "twin_of": "CRYPTO-001",
+    "url": "/php/crypto/hash_safe.php",
+    "method": "POST",
+    "parameter": "password",
+    "expected": "no-finding"
+  },
+  {
+    "id": "CSRF-001-C",
+    "twin_of": "CSRF-001",
+    "url": "/php/csrf/change_password_safe.php",
+    "method": "POST",
+    "parameter": "new_password",
+    "expected": "no-finding"
+  },
+  {
+    "id": "GO-001-C",
+    "twin_of": "GO-001",
+    "url": "/go/proxy_safe",
+    "method": "GET",
+    "parameter": "url",
+    "expected": "no-finding"
+  },
+  {
+    "id": "GO-002-C",
+    "twin_of": "GO-002",
+    "url": "/go/pingback_safe",
+    "method": "GET",
+    "parameter": "url",
+    "expected": "no-finding"
+  },
+  {
+    "id": "GO-003-C",
+    "twin_of": "GO-003",
+    "url": "/go/coupon/redeem_safe",
+    "method": "POST",
+    "parameter": "code",
+    "expected": "no-finding"
+  },
+  {
+    "id": "GO-005-C",
+    "twin_of": "GO-005",
+    "url": "/go/file_safe",
+    "method": "GET",
+    "parameter": "file",
+    "expected": "no-finding"
+  },
+  {
+    "id": "GO-006-C",
+    "twin_of": "GO-006",
+    "url": "/go/diag_safe",
+    "method": "GET",
+    "parameter": "cmd",
+    "expected": "no-finding"
+  },
+  {
+    "id": "GO-007-C",
+    "twin_of": "GO-007",
+    "url": "/go/continue_safe",
+    "method": "GET",
+    "parameter": "next",
+    "expected": "no-finding"
+  },
+  {
+    "id": "GO-008-C",
+    "twin_of": "GO-008",
+    "url": "/go/otp/verify_safe",
+    "method": "POST",
+    "parameter": "code",
+    "expected": "no-finding"
+  },
+  {
+    "id": "GO-009-C",
+    "twin_of": "GO-009",
+    "url": "/go/wallet/purchase_safe",
+    "method": "POST",
+    "parameter": "amount",
+    "expected": "no-finding"
+  },
+  {
+    "id": "GO-010-C",
+    "twin_of": "GO-010",
+    "url": "/go/error_safe",
+    "method": "GET",
+    "parameter": "input",
+    "expected": "no-finding"
+  },
+  {
+    "id": "GO-011-C",
+    "twin_of": "GO-011",
+    "url": "/go/cors_safe",
+    "method": "GET",
+    "parameter": "Origin",
+    "expected": "no-finding"
+  },
+  {
+    "id": "GQL-001-C",
+    "twin_of": "GQL-001",
+    "url": "/graphql_safe",
+    "method": "POST",
+    "parameter": "query",
+    "expected": "no-finding"
+  },
+  {
+    "id": "GQL-002-C",
+    "twin_of": "GQL-002",
+    "url": "/graphql_safe",
+    "method": "POST",
+    "parameter": "query",
+    "expected": "no-finding"
+  },
+  {
+    "id": "GQL-003-C",
+    "twin_of": "GQL-003",
+    "url": "/graphql_safe",
+    "method": "POST",
+    "parameter": "query",
+    "expected": "no-finding"
+  },
+  {
+    "id": "GQL-004-C",
+    "twin_of": "GQL-004",
+    "url": "/graphql_safe",
+    "method": "POST",
+    "parameter": "code",
+    "expected": "no-finding"
+  },
+  {
+    "id": "GQL-005-C",
+    "twin_of": "GQL-005",
+    "url": "/graphql_safe",
+    "method": "POST",
+    "parameter": "query",
+    "expected": "no-finding"
+  },
+  {
+    "id": "GQL-006-C",
+    "twin_of": "GQL-006",
+    "url": "/graphql_safe",
+    "method": "POST",
+    "parameter": "id",
+    "expected": "no-finding"
+  },
+  {
+    "id": "IDOR-001-C",
+    "twin_of": "IDOR-001",
+    "url": "/php/idor/order_safe.php",
+    "method": "GET",
+    "parameter": "id",
+    "expected": "no-finding"
+  },
+  {
+    "id": "IDOR-002-C",
+    "twin_of": "IDOR-002",
+    "url": "/php/idor/profile_safe.php",
+    "method": "GET",
+    "parameter": "user_id",
+    "expected": "no-finding"
+  },
+  {
+    "id": "INFO-001-C",
+    "twin_of": "INFO-001",
+    "url": "/php/robots_safe.txt",
+    "method": "GET",
+    "parameter": "none",
+    "expected": "no-finding"
+  },
+  {
+    "id": "JAVA-001-C",
+    "twin_of": "JAVA-001",
+    "url": "/java/xxe_safe",
+    "method": "POST",
+    "parameter": "body",
+    "expected": "no-finding"
+  },
+  {
+    "id": "JAVA-002-C",
+    "twin_of": "JAVA-002",
+    "url": "/java/deserialize_safe",
+    "method": "POST",
+    "parameter": "data",
+    "expected": "no-finding"
+  },
+  {
+    "id": "JAVA-003-C",
+    "twin_of": "JAVA-003",
+    "url": "/java/template_safe",
+    "method": "GET",
+    "parameter": "name",
+    "expected": "no-finding"
+  },
+  {
+    "id": "JAVA-004-C",
+    "twin_of": "JAVA-004",
+    "url": "/java/log_safe",
+    "method": "GET",
+    "parameter": "msg",
+    "expected": "no-finding"
+  },
+  {
+    "id": "JAVA-005-C",
+    "twin_of": "JAVA-005",
+    "url": "/java/download_safe",
+    "method": "GET",
+    "parameter": "file",
+    "expected": "no-finding"
+  },
+  {
+    "id": "JAVA-006-C",
+    "twin_of": "JAVA-006",
+    "url": "/java/actuator/env_safe",
+    "method": "GET",
+    "parameter": "none",
+    "expected": "no-finding"
+  },
+  {
+    "id": "JAVA-007-C",
+    "twin_of": "JAVA-007",
+    "url": "/java/encrypt_safe",
+    "method": "POST",
+    "parameter": "data",
+    "expected": "no-finding"
+  },
+  {
+    "id": "JAVA-008-C",
+    "twin_of": "JAVA-008",
+    "url": "/java/exec_safe",
+    "method": "GET",
+    "parameter": "cmd",
+    "expected": "no-finding"
+  },
+  {
+    "id": "JAVA-009-C",
+    "twin_of": "JAVA-009",
+    "url": "/java/go_safe",
+    "method": "GET",
+    "parameter": "url",
+    "expected": "no-finding"
+  },
+  {
+    "id": "JAVA-010-C",
+    "twin_of": "JAVA-010",
+    "url": "/java/stack_safe",
+    "method": "GET",
+    "parameter": "input",
+    "expected": "no-finding"
+  },
+  {
+    "id": "LEG-001-C",
+    "twin_of": "LEG-001",
+    "url": "/legacy/index_safe.html",
+    "method": "GET",
+    "parameter": "none",
+    "expected": "no-finding"
+  },
+  {
+    "id": "LEG-002-C",
+    "twin_of": "LEG-002",
+    "url": "/legacy/config_safe.bak",
+    "method": "GET",
+    "parameter": "none",
+    "expected": "no-finding"
+  },
+  {
+    "id": "LEG-003-C",
+    "twin_of": "LEG-003",
+    "url": "/legacy/git_safe/config",
+    "method": "GET",
+    "parameter": "none",
+    "expected": "no-finding"
+  },
+  {
+    "id": "LEG-004-C",
+    "twin_of": "LEG-004",
+    "url": "/legacy/backup_safe/",
+    "method": "GET",
+    "parameter": "none",
+    "expected": "no-finding"
+  },
+  {
+    "id": "LEG-005-C",
+    "twin_of": "LEG-005",
+    "url": "/legacy/admin/login_safe.php",
+    "method": "POST",
+    "parameter": "username",
+    "expected": "no-finding"
+  },
+  {
+    "id": "LEG-006-C",
+    "twin_of": "LEG-006",
+    "url": "/legacy/banner_safe",
+    "method": "GET",
+    "parameter": "none",
+    "expected": "no-finding"
+  },
+  {
+    "id": "LEG-007-C",
+    "twin_of": "LEG-007",
+    "url": "/legacy/readme_safe.html",
+    "method": "GET",
+    "parameter": "none",
+    "expected": "no-finding"
+  },
+  {
+    "id": "LFI-001-C",
+    "twin_of": "LFI-001",
+    "url": "/php/lfi/read_safe.php",
+    "method": "GET",
+    "parameter": "file",
+    "expected": "no-finding"
+  },
+  {
+    "id": "OAUTH-001-C",
+    "twin_of": "OAUTH-001",
+    "url": "/auth/authorize_safe",
+    "method": "GET",
+    "parameter": "redirect_uri",
+    "expected": "no-finding"
+  },
+  {
+    "id": "OAUTH-002-C",
+    "twin_of": "OAUTH-002",
+    "url": "/auth/authorize_state_safe",
+    "method": "GET",
+    "parameter": "state",
+    "expected": "no-finding"
+  },
+  {
+    "id": "OAUTH-003-C",
+    "twin_of": "OAUTH-003",
+    "url": "/auth/implicit_safe",
+    "method": "GET",
+    "parameter": "redirect_uri",
+    "expected": "no-finding"
+  },
+  {
+    "id": "OAUTH-004-C",
+    "twin_of": "OAUTH-004",
+    "url": "/auth/token_safe",
+    "method": "POST",
+    "parameter": "code",
+    "expected": "no-finding"
+  },
+  {
+    "id": "OAUTH-005-C",
+    "twin_of": "OAUTH-005",
+    "url": "/auth/scope_safe",
+    "method": "GET",
+    "parameter": "scope",
+    "expected": "no-finding"
+  },
+  {
+    "id": "OAUTH-006-C",
+    "twin_of": "OAUTH-006",
+    "url": "/auth/saml/acs_safe",
+    "method": "POST",
+    "parameter": "SAMLResponse",
+    "expected": "no-finding"
+  },
+  {
+    "id": "OAUTH-007-C",
+    "twin_of": "OAUTH-007",
+    "url": "/auth/login_safe",
+    "method": "POST",
+    "parameter": "username",
+    "expected": "no-finding"
+  },
+  {
+    "id": "PY-001-C",
+    "twin_of": "PY-001",
+    "url": "/py/ssti_safe",
+    "method": "GET",
+    "parameter": "name",
+    "expected": "no-finding"
+  },
+  {
+    "id": "PY-002-C",
+    "twin_of": "PY-002",
+    "url": "/py/pickle_safe",
+    "method": "POST",
+    "parameter": "data",
+    "expected": "no-finding"
+  },
+  {
+    "id": "PY-003-C",
+    "twin_of": "PY-003",
+    "url": "/py/yaml_safe",
+    "method": "POST",
+    "parameter": "config",
+    "expected": "no-finding"
+  },
+  {
+    "id": "PY-004-C",
+    "twin_of": "PY-004",
+    "url": "/py/download_safe",
+    "method": "GET",
+    "parameter": "file",
+    "expected": "no-finding"
+  },
+  {
+    "id": "PY-005-C",
+    "twin_of": "PY-005",
+    "url": "/py/fetch_safe",
+    "method": "GET",
+    "parameter": "url",
+    "expected": "no-finding"
+  },
+  {
+    "id": "PY-006-C",
+    "twin_of": "PY-006",
+    "url": "/py/ping_safe",
+    "method": "GET",
+    "parameter": "host",
+    "expected": "no-finding"
+  },
+  {
+    "id": "PY-007-C",
+    "twin_of": "PY-007",
+    "url": "/py/console_safe",
+    "method": "GET",
+    "parameter": "none",
+    "expected": "no-finding"
+  },
+  {
+    "id": "PY-008-C",
+    "twin_of": "PY-008",
+    "url": "/py/redirect_safe",
+    "method": "GET",
+    "parameter": "next",
+    "expected": "no-finding"
+  },
+  {
+    "id": "PY-009-C",
+    "twin_of": "PY-009",
+    "url": "/py/reset_token_safe",
+    "method": "GET",
+    "parameter": "user",
+    "expected": "no-finding"
+  },
+  {
+    "id": "PY-010-C",
+    "twin_of": "PY-010",
+    "url": "/py/login_safe",
+    "method": "GET",
+    "parameter": "session",
+    "expected": "no-finding"
+  },
+  {
+    "id": "PY-011-C",
+    "twin_of": "PY-011",
+    "url": "/py/validate_safe",
+    "method": "GET",
+    "parameter": "email",
+    "expected": "no-finding"
+  },
+  {
+    "id": "REDIR-001-C",
+    "twin_of": "REDIR-001",
+    "url": "/php/redirect/redirect_safe.php",
+    "method": "GET",
+    "parameter": "next",
+    "expected": "no-finding"
+  },
+  {
+    "id": "SQLI-001-C",
+    "twin_of": "SQLI-001",
+    "url": "/php/sqli/products_safe.php",
+    "method": "GET",
+    "parameter": "id",
+    "expected": "no-finding"
+  },
+  {
+    "id": "SQLI-002-C",
+    "twin_of": "SQLI-002",
+    "url": "/php/sqli/search_safe.php",
+    "method": "GET",
+    "parameter": "q",
+    "expected": "no-finding"
+  },
+  {
+    "id": "SQLI-003-C",
+    "twin_of": "SQLI-003",
+    "url": "/php/sqli/blind_safe.php",
+    "method": "GET",
+    "parameter": "id",
+    "expected": "no-finding"
+  },
+  {
+    "id": "SQLI-004-C",
+    "twin_of": "SQLI-004",
+    "url": "/php/sqli/time_blind_safe.php",
+    "method": "GET",
+    "parameter": "id",
+    "expected": "no-finding"
+  },
+  {
+    "id": "SQLI-005-C",
+    "twin_of": "SQLI-005",
+    "url": "/php/sqli/order_safe.php",
+    "method": "GET",
+    "parameter": "sort",
+    "expected": "no-finding"
+  },
+  {
+    "id": "SQLI-006-C",
+    "twin_of": "SQLI-006",
+    "url": "/php/sqli/second_order_safe.php",
+    "method": "POST",
+    "parameter": "username",
+    "expected": "no-finding"
+  },
+  {
+    "id": "SQLI-007-C",
+    "twin_of": "SQLI-007",
+    "url": "/php/sqli/header_inject_safe.php",
+    "method": "GET",
+    "parameter": "X-Forwarded-For",
+    "expected": "no-finding"
+  },
+  {
+    "id": "UPLOAD-001-C",
+    "twin_of": "UPLOAD-001",
+    "url": "/php/upload/upload_safe.php",
+    "method": "POST",
+    "parameter": "file",
+    "expected": "no-finding"
+  },
+  {
+    "id": "XSS-001-C",
+    "twin_of": "XSS-001",
+    "url": "/php/xss/reflected_safe.php",
+    "method": "GET",
+    "parameter": "name",
+    "expected": "no-finding"
+  },
+  {
+    "id": "XSS-002-C",
+    "twin_of": "XSS-002",
+    "url": "/php/xss/stored_safe.php",
+    "method": "POST",
+    "parameter": "body",
+    "expected": "no-finding"
+  },
+  {
+    "id": "XSS-003-C",
+    "twin_of": "XSS-003",
+    "url": "/php/xss/dom_safe.php",
+    "method": "GET",
+    "parameter": "hash",
+    "expected": "no-finding"
+  }
+]

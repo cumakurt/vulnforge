@@ -1,0 +1,5 @@
+Welcome to the VulnForge page loader.
+
+This page exists so that LFI-001 has a legitimate baseline target.
+The vulnerable endpoint concatenates the "file" parameter onto
+src/data/pages/ without normalising traversal sequences.
