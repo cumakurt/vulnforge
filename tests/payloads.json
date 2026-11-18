@@ -40,7 +40,8 @@
   },
   "API-009": {
     "steps": [{"method": "POST", "json": {"url": "http://internal-metadata/latest/meta-data/iam/security-credentials/vulnforge-role"}}],
-    "check": {"body_contains": ["AccessKeyId"]}
+    "check": {"body_contains": ["AccessKeyId"]},
+    "requires_services": ["internal-metadata"]
   },
   "API-010": {
     "steps": [{"method": "GET", "params": {"limit": "5000"}}],
@@ -89,7 +90,8 @@
   },
   "PY-005": {
     "steps": [{"method": "GET", "params": {"url": "http://internal-metadata/latest/meta-data/iam/security-credentials/vulnforge-role"}}],
-    "check": {"body_contains": ["AccessKeyId"]}
+    "check": {"body_contains": ["AccessKeyId"]},
+    "requires_services": ["internal-metadata"]
   },
   "PY-006": {
     "steps": [{"method": "GET", "params": {"host": "127.0.0.1; echo PY_MARKER"}}],
@@ -161,7 +163,8 @@
 
   "GO-001": {
     "steps": [{"method": "GET", "params": {"url": "http://internal-metadata/latest/meta-data/iam/security-credentials/vulnforge-role"}}],
-    "check": {"body_contains": ["AccessKeyId"]}
+    "check": {"body_contains": ["AccessKeyId"]},
+    "requires_services": ["internal-metadata"]
   },
   "GO-002": {
     "steps": [{"method": "GET", "params": {"url": "http://oob-collector:9000/oob/GO002"}}],

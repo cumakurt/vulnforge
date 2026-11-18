@@ -50,6 +50,7 @@ SERVICES: dict[str, str] = {
     "legacy-svc":    "http://legacy-svc:8888/health",
     "auth-svc":      "http://auth-svc:8080/health",
     "oob-collector": "http://oob-collector:9000/health",
+    "internal-metadata": "http://internal-metadata/latest/meta-data/",
 }
 
 # In-memory event log (bounded)

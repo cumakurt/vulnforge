@@ -168,14 +168,32 @@ make controls   # every safe twin must reject the same payload
 make test       # both (198 checks)
 ```
 
+The runner asks `lab-control` which services are running. Vulnerabilities that
+belong to a service that is not part of the started compose profile are
+reported as `SKIP` (not failures), so the suites work with any profile:
+
+```
+=== SMOKE ===
+  SKIP API-001: service 'node-api' is not running
+  ...
+26 test(s) run, 0 failure(s), 73 skipped
+```
+
+Pass `--require-all-services` to treat a missing service as a failure instead
+(useful in CI, where only the `full` profile should be used):
+
+```bash
+python3 tests/run_tests.py --mode all --require-all-services
+```
+
 Expected result on a healthy `full` profile:
 
 ```
 === SMOKE ===
-99 test(s) run, 0 failure(s)
+99 test(s) run, 0 failure(s), 0 skipped
 
 === CONTROLS ===
-99 test(s) run, 0 failure(s)
+99 test(s) run, 0 failure(s), 0 skipped
 ```
 
 ---

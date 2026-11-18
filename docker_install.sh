@@ -14,8 +14,8 @@
 # you control, bound to loopback, never exposed to the internet.
 #
 # Usage:
-#   ./docker_install.sh                     # core profile
-#   ./docker_install.sh --profile full      # every service
+#   ./docker_install.sh                     # full profile (all services)
+#   ./docker_install.sh --profile core      # minimal lab only
 #   ./docker_install.sh --port 18000 --yes  # unattended
 #   ./docker_install.sh --help
 
@@ -24,7 +24,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-PROFILE="core"
+PROFILE="full"
 HTTP_PORT=""
 ASSUME_YES="false"
 SKIP_TESTS="false"
@@ -69,7 +69,7 @@ Usage: ./docker_install.sh [options]
 
 Options:
   --profile <core|full|api|infra|waf|crawl>
-                          Compose profile to start (default: core)
+                          Compose profile to start (default: full)
   --port <port>           Host HTTP port for the gateway (default: 8000 or next free)
   --https-port <port>     Host HTTPS port for the gateway (default: 8443)
   --lab-port <port>       Host port for lab-control (default: 9100)
@@ -80,7 +80,7 @@ Options:
 
 Examples:
   ./docker_install.sh
-  ./docker_install.sh --profile full --yes
+  ./docker_install.sh --profile core --yes
   ./docker_install.sh --port 18000 --skip-tests
 EOF
 }
@@ -374,8 +374,14 @@ ok "all services are healthy"
 # Optional smoke suite
 if [ "$SKIP_TESTS" = "false" ]; then
   if python3 -c "import requests" >/dev/null 2>&1; then
-    info "Running the smoke suite (this exercises every vulnerability)"
-    if python3 tests/run_tests.py --mode smoke \
+    # Only the full profile runs every service, so only there can we demand
+    # that all 99 vulnerabilities are exercised.
+    REQUIRE_ALL_FLAG=""
+    if [ "$PROFILE" = "full" ]; then
+      REQUIRE_ALL_FLAG="--require-all-services"
+    fi
+    info "Running the smoke suite (this exercises every vulnerability in the running services)"
+    if python3 tests/run_tests.py --mode smoke $REQUIRE_ALL_FLAG \
         --base-url "http://127.0.0.1:$HTTP_PORT" \
         --lab-control "http://127.0.0.1:$LAB_CONTROL_PORT"; then
       ok "smoke suite passed"

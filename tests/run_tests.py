@@ -22,11 +22,17 @@ Top-level keys:
   check      final assertion
   control_check  assertion used for the safe twin instead of "exploit rejected"
   allow_redirects  (default true)
+  requires_services  extra internal services the payload depends on; the test
+                     is skipped when any of them (or the vuln's own service)
+                     is not running
 
 Usage:
   python3 tests/run_tests.py --mode smoke
   python3 tests/run_tests.py --mode controls
   python3 tests/run_tests.py --mode all --base-url http://127.0.0.1:8000
+
+Tests whose backing service is not running (smaller compose profiles) are
+skipped; pass --require-all-services to treat them as failures instead.
 """
 
 import argparse
@@ -60,6 +66,23 @@ def reset_lab(lab_control: str) -> None:
             print(f"  [warn] reset returned HTTP {response.status_code}")
     except requests.RequestException as exc:
         print(f"  [warn] reset failed: {exc}")
+
+
+def fetch_service_status(lab_control: str) -> dict[str, str] | None:
+    """
+    Return {service_name: "up"|"down"} from lab-control, or None when the
+    health endpoint is unreachable (in which case no filtering is applied).
+    """
+    try:
+        response = requests.get(f"{lab_control}/__lab/health", timeout=10)
+        response.raise_for_status()
+        return {
+            name: result.get("status", "down")
+            for name, result in response.json().get("services", {}).items()
+        }
+    except (requests.RequestException, ValueError) as exc:
+        print(f"  [warn] service health unavailable ({exc}); running all tests")
+        return None
 
 
 def evaluate(response, elapsed: float, check: dict) -> tuple[bool, str]:
@@ -274,6 +297,11 @@ def main() -> int:
     parser.add_argument("--lab-control", default="http://127.0.0.1:9100")
     parser.add_argument("--no-reset", action="store_true", help="do not reset the lab before each test")
     parser.add_argument("--filter", default="", help="only run vuln ids containing this substring")
+    parser.add_argument(
+        "--require-all-services",
+        action="store_true",
+        help="fail (instead of skipping) tests whose backing service is not running",
+    )
     args = parser.parse_args()
 
     vulns = load_json(VULNS)
@@ -284,8 +312,10 @@ def main() -> int:
     vulns_by_id = {vuln["id"]: vuln for vuln in vulns}
 
     modes = ["smoke", "controls"] if args.mode == "all" else [args.mode]
+    service_status = fetch_service_status(args.lab_control)
     failures: list[tuple[str, str, str]] = []
     tested = 0
+    skipped = 0
 
     for mode in modes:
         print(f"\n=== {mode.upper()} ===")
@@ -298,6 +328,31 @@ def main() -> int:
 
             spec = payloads[vuln_id]
             control = control_by_twin.get(vuln_id)
+
+            # A vuln can only be exercised when its backing service — and any
+            # internal service its payload proxies to — is running; compose
+            # profiles other than "full" start only a subset.
+            required_services = [
+                vulns_by_id[vuln_id].get("service", ""),
+                *spec.get("requires_services", []),
+            ]
+            down_service = next(
+                (
+                    name
+                    for name in required_services
+                    if service_status is not None and service_status.get(name, "up") != "up"
+                ),
+                None,
+            )
+            if down_service is not None:
+                reason = f"service '{down_service}' is not running"
+                if args.require_all_services:
+                    failures.append((vuln_id, mode, reason))
+                    print(f"  FAIL {vuln_id}: {reason}")
+                else:
+                    skipped += 1
+                    print(f"  SKIP {vuln_id}: {reason}")
+                continue
 
             if mode == "controls" and control is None:
                 failures.append((vuln_id, "controls", "no control twin defined"))
@@ -313,7 +368,7 @@ def main() -> int:
             if not passed:
                 failures.append((vuln_id, mode, reason))
 
-    print(f"\n{tested} test(s) run, {len(failures)} failure(s)")
+    print(f"\n{tested} test(s) run, {len(failures)} failure(s), {skipped} skipped")
     for vuln_id, mode, reason in failures:
         print(f"  - {mode}/{vuln_id}: {reason}")
 
