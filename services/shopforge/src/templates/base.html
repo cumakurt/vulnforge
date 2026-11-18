@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}ShopForge — Online Store{% endblock %}</title>
+<meta name="description" content="ShopForge — your trusted online marketplace for tech, electronics and gadgets.">
+<style>
+/* ── Reset & tokens ───────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f8f9fa;--white:#fff;--surface:#fff;
+  --brand:#1a56db;--brand-dark:#1e429f;--brand-light:#ebf0ff;
+  --text:#111827;--muted:#6b7280;--border:#e5e7eb;
+  --red:#dc2626;--green:#16a34a;--yellow:#ca8a04;
+  --radius:8px;--shadow:0 1px 3px rgba(0,0,0,.08);
+  --font:'Inter',system-ui,sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px;line-height:1.6}
+a{color:var(--brand);text-decoration:none}
+a:hover{text-decoration:underline}
+img{max-width:100%;height:auto}
+input,select,textarea,button{font:inherit}
+
+/* ── Utility ──────────────────────────────────────────────────────── */
+.container{max-width:1180px;margin:0 auto;padding:0 20px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:6px;border:none;cursor:pointer;font-size:14px;font-weight:500;transition:opacity .15s,background .15s}
+.btn:hover{opacity:.88}
+.btn-primary{background:var(--brand);color:#fff}
+.btn-outline{background:transparent;color:var(--brand);border:1px solid var(--brand)}
+.btn-sm{padding:5px 12px;font-size:13px}
+.btn-danger{background:var(--red);color:#fff}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:500}
+.badge-new{background:#fef9c3;color:#854d0e}
+.badge-sale{background:#fee2e2;color:#991b1b}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.mt-4{margin-top:16px}.mt-6{margin-top:24px}.mt-8{margin-top:32px}
+.mb-4{margin-bottom:16px}.mb-6{margin-bottom:24px}
+.text-muted{color:var(--muted)}.text-sm{font-size:13px}
+.font-bold{font-weight:700}.font-semibold{font-weight:600}
+section{margin-bottom:48px}
+.alert{padding:12px 16px;border-radius:6px;font-size:14px;margin-bottom:16px}
+.alert-info{background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe}
+.alert-warn{background:#fffbeb;color:#92400e;border:1px solid #fde68a}
+
+/* ── Forms ────────────────────────────────────────────────────────── */
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:13px;font-weight:500;margin-bottom:5px;color:#374151}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;outline:none;transition:border .15s;background:var(--white)}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--brand)}
+.form-hint{font-size:12px;color:var(--muted);margin-top:4px}
+
+/* ── Top bar ──────────────────────────────────────────────────────── */
+.topbar{background:#1e3a8a;color:#fff;font-size:12px;padding:6px 0}
+.topbar .container{display:flex;justify-content:space-between;align-items:center}
+.topbar a{color:#bfdbfe}
+
+/* ── Header ───────────────────────────────────────────────────────── */
+header.site-header{background:var(--white);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
+.header-inner{display:flex;align-items:center;gap:24px;padding:14px 20px;max-width:1180px;margin:0 auto}
+.logo{font-size:22px;font-weight:800;color:var(--brand);text-decoration:none;letter-spacing:-.5px}
+.logo span{color:var(--brand-dark)}
+.search-bar{flex:1;max-width:480px;position:relative}
+.search-bar input{width:100%;padding:9px 40px 9px 14px;border:2px solid var(--border);border-radius:999px;font-size:14px;outline:none;transition:border .15s}
+.search-bar input:focus{border-color:var(--brand)}
+.search-bar button{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted)}
+.header-actions{display:flex;align-items:center;gap:16px;margin-left:auto}
+.header-actions a{color:var(--text);font-size:13px;font-weight:500;display:flex;align-items:center;gap:5px}
+.header-actions a:hover{color:var(--brand);text-decoration:none}
+.cart-count{background:var(--red);color:#fff;border-radius:999px;padding:1px 6px;font-size:11px;font-weight:700}
+
+/* ── Nav ──────────────────────────────────────────────────────────── */
+nav.main-nav{background:var(--white);border-bottom:1px solid var(--border)}
+.main-nav .container{display:flex;gap:0;overflow-x:auto}
+.main-nav a{display:block;padding:10px 16px;font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;border-bottom:2px solid transparent;transition:all .15s}
+.main-nav a:hover,.main-nav a.active{color:var(--brand);border-bottom-color:var(--brand);text-decoration:none}
+
+/* ── Hero ─────────────────────────────────────────────────────────── */
+.hero{background:linear-gradient(135deg,#1e3a8a 0%,#1a56db 60%,#3b82f6 100%);color:#fff;padding:64px 0;text-align:center}
+.hero h1{font-size:40px;font-weight:800;margin-bottom:12px;letter-spacing:-.5px}
+.hero p{font-size:18px;opacity:.88;margin-bottom:28px}
+.hero .hero-search{display:flex;max-width:520px;margin:0 auto;background:#fff;border-radius:999px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.2)}
+.hero .hero-search input{flex:1;padding:14px 20px;border:none;outline:none;font-size:15px;color:var(--text)}
+.hero .hero-search button{background:var(--brand-dark);color:#fff;border:none;padding:14px 24px;cursor:pointer;font-size:14px;font-weight:600}
+
+/* ── Category strip ───────────────────────────────────────────────── */
+.cat-strip{display:flex;gap:12px;overflow-x:auto;padding:4px 0;scroll-snap-type:x mandatory}
+.cat-pill{flex-shrink:0;scroll-snap-align:start;background:var(--white);border:1px solid var(--border);border-radius:999px;padding:7px 18px;font-size:13px;font-weight:500;cursor:pointer;color:var(--text);text-decoration:none;transition:all .15s}
+.cat-pill:hover,.cat-pill.active{background:var(--brand);color:#fff;border-color:var(--brand);text-decoration:none}
+
+/* ── Product card ─────────────────────────────────────────────────── */
+.product-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:box-shadow .2s;display:flex;flex-direction:column}
+.product-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.12)}
+.product-card .thumb{background:linear-gradient(135deg,#f0f4ff,#e8edff);aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:48px}
+.product-card .body{padding:14px;flex:1;display:flex;flex-direction:column;gap:6px}
+.product-card .name{font-weight:600;font-size:14px;line-height:1.4}
+.product-card .price{font-size:18px;font-weight:700;color:var(--brand)}
+.product-card .old-price{font-size:12px;color:var(--muted);text-decoration:line-through}
+.product-card .actions{margin-top:auto;padding-top:10px;display:flex;gap:8px}
+
+/* ── Footer ───────────────────────────────────────────────────────── */
+footer.site-footer{background:#111827;color:#9ca3af;padding:48px 0 24px;margin-top:64px}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
+.footer-brand .logo{color:#60a5fa;font-size:20px}
+.footer-brand p{font-size:13px;margin-top:8px;line-height:1.6}
+.footer-col h4{font-size:13px;font-weight:600;color:#f9fafb;margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em}
+.footer-col ul{list-style:none;display:flex;flex-direction:column;gap:7px}
+.footer-col ul li a{color:#9ca3af;font-size:13px}
+.footer-col ul li a:hover{color:#f9fafb}
+.footer-bottom{border-top:1px solid #374151;padding-top:20px;display:flex;justify-content:space-between;align-items:center;font-size:12px}
+.footer-bottom a{color:#6b7280}
+
+/* ── Breadcrumb ───────────────────────────────────────────────────── */
+.breadcrumb{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--muted);margin-bottom:20px}
+.breadcrumb a{color:var(--muted)}
+.breadcrumb span::before{content:"/";margin-right:6px}
+
+/* ── Responsive ───────────────────────────────────────────────────── */
+@media(max-width:768px){
+  .grid-4{grid-template-columns:repeat(2,1fr)}
+  .grid-3{grid-template-columns:repeat(2,1fr)}
+  .grid-2{grid-template-columns:1fr}
+  .footer-grid{grid-template-columns:1fr 1fr}
+  .hero h1{font-size:28px}
+}
+</style>
+{% block head %}{% endblock %}
+</head>
+<body>
+
+<!-- Top announcement bar -->
+<div class="topbar">
+  <div class="container">
+    <span>🚚 Free shipping on orders over $50 | <a href="/support">Support</a></span>
+    <span>
+      <a href="/login">Sign in</a> &nbsp;|&nbsp;
+      <a href="/register">Create account</a> &nbsp;|&nbsp;
+      <a href="/legacy/">Legacy Store</a> &nbsp;|&nbsp;
+      <a href="/spa/">Mobile App</a>
+    </span>
+  </div>
+</div>
+
+<!-- Header -->
+<header class="site-header">
+  <div class="header-inner">
+    <a href="/" class="logo">Shop<span>Forge</span></a>
+
+    <!-- Search — links to reflected XSS endpoint -->
+    <form class="search-bar" action="/search" method="GET" role="search">
+      <input type="text" name="q" placeholder="Search products, brands, categories…"
+             value="" autocomplete="off">
+      <button type="submit" aria-label="Search">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+    </form>
+
+    <div class="header-actions">
+      <a href="/wishlist">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        Wishlist
+      </a>
+      <a href="/profile">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Account
+      </a>
+      <a href="/cart">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        Cart <span class="cart-count">3</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- Navigation -->
+<nav class="main-nav">
+  <div class="container">
+    <a href="/" class="{% block nav_home %}{% endblock %}">Home</a>
+    <a href="/products">All Products</a>
+    <a href="/products?category=electronics">Electronics</a>
+    <a href="/products?category=software">Software</a>
+    <a href="/products?category=accessories">Accessories</a>
+    <a href="/blog">Blog</a>
+    <a href="/support">Support</a>
+    <a href="/api-docs">API</a>
+    <a href="/admin" style="color:#dc2626;">Admin</a>
+  </div>
+</nav>
+
+<!-- Page content -->
+{% block content %}{% endblock %}
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="logo">Shop<span style="color:#93c5fd">Forge</span></div>
+        <p>Your trusted marketplace for tech, electronics and software. Powered by modern APIs and microservices.</p>
+        <!-- Hidden comment that hints at backup file — LEG-002 style -->
+        <!-- backup: /config.php.bak | legacy admin: /legacy/admin/login.php -->
+      </div>
+      <div class="footer-col">
+        <h4>Shop</h4>
+        <ul>
+          <li><a href="/products">All Products</a></li>
+          <li><a href="/products?category=electronics">Electronics</a></li>
+          <li><a href="/products?category=software">Software</a></li>
+          <li><a href="/products?category=accessories">Accessories</a></li>
+          <li><a href="/products?id=1 UNION SELECT 1,2,3,version(),5,6--">New Arrivals</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Account</h4>
+        <ul>
+          <li><a href="/login">Sign In</a></li>
+          <li><a href="/register">Register</a></li>
+          <li><a href="/profile">My Profile</a></li>
+          <li><a href="/orders">My Orders</a></li>
+          <li><a href="/php/auth/login.php">Legacy Login</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Help</h4>
+        <ul>
+          <li><a href="/support">Support Center</a></li>
+          <li><a href="/download?file=catalogue.pdf">Download Catalogue</a></li>
+          <li><a href="/api-docs">Developer API</a></li>
+          <li><a href="/about">About Us</a></li>
+          <li><a href="/redirect?next=https://evil.example/">Partner Portal</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2024 ShopForge Inc. All rights reserved.</span>
+      <span>
+        <a href="/php/config/phpinfo.php">System Info</a> &nbsp;·&nbsp;
+        <a href="/legacy/.git/config">Version</a> &nbsp;·&nbsp;
+        <a href="/legacy/backup/">Backups</a>
+      </span>
+    </div>
+  </div>
+</footer>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}About Us — ShopForge{% endblock %}
+{% block content %}
+<div class="container" style="max-width:800px;padding-top:40px;padding-bottom:48px">
+  <div class="breadcrumb"><a href="/">Home</a><span>About</span></div>
+  <h1 style="font-size:28px;font-weight:700;margin-bottom:8px">About ShopForge</h1>
+  <p class="text-muted mb-6">Your trusted online marketplace since 2019.</p>
+
+  <div class="card" style="padding:28px;margin-bottom:20px">
+    <h2 style="font-size:17px;font-weight:600;margin-bottom:12px">Our Tech Stack</h2>
+    <div class="grid-2">
+      <div>
+        <ul style="font-size:14px;display:flex;flex-direction:column;gap:8px;list-style:none">
+          <li>🐘 PHP 8.1 / Apache — <a href="/php/config/phpinfo.php">phpinfo</a></li>
+          <li>🟩 Node.js REST API — <a href="/api/v1/products">browse</a></li>
+          <li>🐍 Python Flask — <a href="/py/ssti?name=World">template engine</a></li>
+          <li>☕ Java Spring Boot — <a href="/java/template?name=World">service</a></li>
+          <li>🐹 Go microservice — <a href="/go/proxy?url=http://example.com">proxy</a></li>
+          <li>⬡ GraphQL — <a href="/graphql">endpoint</a></li>
+        </ul>
+      </div>
+      <div>
+        <ul style="font-size:14px;display:flex;flex-direction:column;gap:8px;list-style:none">
+          <li>📱 React SPA — <a href="/spa/">mobile app</a> (<a href="/spa/app.js.map">source map</a>)</li>
+          <li>🏛️ Legacy PHP — <a href="/legacy/">old store</a></li>
+          <li>🔐 OAuth/OIDC — <a href="/auth/.well-known/openid-configuration">discovery</a></li>
+          <li>🗄️ MySQL, PostgreSQL, MongoDB, Redis</li>
+          <li>📧 Mailhog SMTP — internal</li>
+          <li>🔍 OOB Collector — internal</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="padding:28px;margin-bottom:20px">
+    <h2 style="font-size:17px;font-weight:600;margin-bottom:12px">Infrastructure</h2>
+    <p class="text-sm text-muted mb-4">Our server configuration and diagnostics:</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <a href="/legacy/banner" class="btn btn-outline btn-sm">Server Banner</a>
+      <a href="/legacy/.git/config" class="btn btn-outline btn-sm">Git Config</a>
+      <a href="/legacy/backup/" class="btn btn-outline btn-sm">Backups</a>
+      <a href="/legacy/config.php.bak" class="btn btn-outline btn-sm">DB Config</a>
+      <a href="/java/actuator/env" class="btn btn-outline btn-sm">Java Env</a>
+      <a href="/api/internal/debug" class="btn btn-outline btn-sm">API Debug</a>
+    </div>
+  </div>
+
+  <div class="card" style="padding:28px">
+    <h2 style="font-size:17px;font-weight:600;margin-bottom:12px">Contact</h2>
+    <p class="text-sm" style="margin-bottom:12px">Email: <a href="mailto:admin@shopforge.example">admin@shopforge.example</a></p>
+    <!-- SSRF: image proxy used to fetch contact page from external URL -->
+    <form action="/go/proxy" method="GET" style="display:flex;gap:8px">
+      <input type="url" name="url" placeholder="https://partner-site.example/contact"
+             style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px">
+      <button type="submit" class="btn btn-outline btn-sm">Fetch Partner Page</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

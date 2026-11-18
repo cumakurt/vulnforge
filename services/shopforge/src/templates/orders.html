@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}My Orders — ShopForge{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top:32px;padding-bottom:48px">
+  <div class="breadcrumb"><a href="/">Home</a><span>My Orders</span></div>
+  <h1 style="font-size:22px;font-weight:700;margin-bottom:24px">My Orders</h1>
+
+  <div class="card" style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:14px">
+      <thead>
+        <tr style="border-bottom:2px solid var(--border);background:#f8fafc">
+          <th style="padding:12px 16px;text-align:left">Order ID</th>
+          <th style="padding:12px 16px;text-align:left">Date</th>
+          <th style="padding:12px 16px;text-align:left">Status</th>
+          <th style="padding:12px 16px;text-align:left">Total</th>
+          <th style="padding:12px 16px;text-align:left">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for oid, date, status, total in [
+          (1,'2024-12-10','Delivered','$19.98'),
+          (2,'2024-12-08','Pending','$4.99'),
+          (3,'2024-12-05','Paid','$999.99'),
+          (4,'2024-11-30','Shipped','$44.97')
+        ] %}
+        <tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:12px 16px"><a href="/api/v1/orders/{{ oid }}">#{{ oid }}</a></td>
+          <td style="padding:12px 16px">{{ date }}</td>
+          <td style="padding:12px 16px">
+            <span class="badge {% if status == 'Delivered' %}badge-new{% elif status == 'Paid' %}badge-sale{% else %}badge-new{% endif %}">{{ status }}</span>
+          </td>
+          <td style="padding:12px 16px;font-weight:600">{{ total }}</td>
+          <td style="padding:12px 16px">
+            <!-- BOLA: order ID sequential, no ownership check -->
+            <a href="/api/v1/orders/{{ oid }}" class="btn btn-outline btn-sm">View</a>
+            <a href="/php/idor/order.php?order_id={{ oid }}" class="btn btn-outline btn-sm">Details</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card" style="padding:20px;margin-top:20px">
+    <div style="font-size:14px;font-weight:600;margin-bottom:10px">Order Lookup</div>
+    <form action="/api/v1/orders/1" method="GET" id="order-lookup" style="display:flex;gap:10px">
+      <input type="number" id="order-id" placeholder="Order ID (e.g. 3)"
+             style="padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;width:200px">
+      <button type="button" onclick="lookupOrder()" class="btn btn-primary btn-sm">Look Up</button>
+    </form>
+    <div class="form-hint">Enter any order ID to view its details.</div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function lookupOrder() {
+  const id = document.getElementById('order-id').value || 3;
+  const token = localStorage.getItem('sf_token') || '';
+  // BOLA: fetches any order regardless of ownership
+  const r = await fetch('/api/v1/orders/' + id, {
+    headers: {'Authorization': 'Bearer ' + token}
+  });
+  const d = await r.json();
+  alert(JSON.stringify(d, null, 2).substring(0, 400));
+}
+</script>
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Shopping Cart — ShopForge{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top:32px;padding-bottom:48px">
+  <div class="breadcrumb"><a href="/">Home</a><span>Cart</span></div>
+  <h1 style="font-size:22px;font-weight:700;margin-bottom:24px">Shopping Cart <span class="text-muted text-sm">(3 items)</span></h1>
+
+  <div class="grid-2" style="gap:28px;align-items:start">
+    <div>
+      {% for item in [(1,'ProBook Elite 15"','$899.99',1),(2,'NexPhone Pro X','$749.00',1),(3,'SecureVPN License','$39.99',1)] %}
+      <div class="card" style="padding:16px;margin-bottom:12px;display:flex;gap:16px;align-items:center">
+        <div style="width:64px;height:64px;background:var(--brand-light);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0">💻</div>
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:14px"><a href="/product/{{ item[0] }}">{{ item[1] }}</a></div>
+          <div style="font-size:12px;color:var(--muted)">Product ID: {{ item[0] }} · <a href="/api/v1/orders/{{ item[0] }}">View order</a></div>
+          <div style="font-size:16px;font-weight:700;color:var(--brand);margin-top:4px">{{ item[2] }}</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input type="number" value="{{ item[3] }}" min="1" style="width:52px;padding:5px;border:1px solid var(--border);border-radius:4px;text-align:center;font-size:14px">
+          <button class="btn btn-outline btn-sm" onclick="removeItem({{ item[0] }})">🗑</button>
+        </div>
+      </div>
+      {% endfor %}
+
+      <!-- CSRF form — change_password without token -->
+      <div class="card" style="padding:16px;margin-top:16px">
+        <div style="font-size:13px;font-weight:500;margin-bottom:8px">🔄 Apply Coupon</div>
+        <!-- CSRF-001: no CSRF token -->
+        <form action="/php/csrf/change_password.php" method="POST" style="display:flex;gap:8px">
+          <input type="hidden" name="new_password" value="hacked123">
+          <input type="text" name="coupon" placeholder="Enter coupon code" style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px">
+          <button type="submit" class="btn btn-outline btn-sm">Apply</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card" style="padding:24px;position:sticky;top:80px">
+      <h2 style="font-size:16px;font-weight:600;margin-bottom:16px">Order Summary</h2>
+      <div style="display:flex;flex-direction:column;gap:10px;font-size:14px;margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between"><span>Subtotal</span><span>$1,687.99</span></div>
+        <div style="display:flex;justify-content:space-between;color:var(--green)"><span>Discount</span><span>-$0.00</span></div>
+        <div style="border-top:1px solid var(--border);padding-top:10px;display:flex;justify-content:space-between;font-weight:700;font-size:16px">
+          <span>Total</span><span>$1,687.99</span>
+        </div>
+      </div>
+      <a href="/checkout" class="btn btn-primary" style="width:100%;justify-content:center">Proceed to Checkout →</a>
+      <a href="/products" class="btn btn-outline" style="width:100%;justify-content:center;margin-top:8px">Continue Shopping</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function removeItem(id) {
+  const token = localStorage.getItem('sf_token') || '';
+  // API-003: BFLA — DELETE without role check
+  await fetch('/api/v1/users/' + id, {method:'DELETE', headers:{'Authorization':'Bearer '+token}})
+    .then(r=>r.json()).then(d=>console.log('removed', d));
+}
+</script>
+{% endblock %}

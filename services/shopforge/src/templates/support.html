@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block title %}Support Center — ShopForge{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top:32px;padding-bottom:48px">
+  <div class="breadcrumb"><a href="/">Home</a><span>Support</span></div>
+
+  <h1 style="font-size:24px;font-weight:700;margin-bottom:8px">Support Center</h1>
+  <p class="text-muted mb-6">How can we help you today?</p>
+
+  <div class="grid-3" style="margin-bottom:36px">
+    <a href="/support?topic=orders" class="card" style="padding:24px;text-decoration:none;color:inherit;text-align:center">
+      <div style="font-size:32px;margin-bottom:8px">📦</div>
+      <div style="font-weight:600;margin-bottom:4px">Track Order</div>
+      <div class="text-sm text-muted">Check status of your order</div>
+    </a>
+    <a href="/support?topic=returns" class="card" style="padding:24px;text-decoration:none;color:inherit;text-align:center">
+      <div style="font-size:32px;margin-bottom:8px">↩️</div>
+      <div style="font-weight:600;margin-bottom:4px">Returns</div>
+      <div class="text-sm text-muted">Start a return or refund</div>
+    </a>
+    <a href="/spa/panel" class="card" style="padding:24px;text-decoration:none;color:inherit;text-align:center">
+      <div style="font-size:32px;margin-bottom:8px">🛠️</div>
+      <div style="font-weight:600;margin-bottom:4px">Internal Panel</div>
+      <div class="text-sm text-muted">Agent support dashboard</div>
+    </a>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+
+    <!-- Contact form — file upload (UPLOAD-001) + SSRF (PY-005) -->
+    <div class="card" style="padding:24px">
+      <h2 style="font-size:16px;font-weight:600;margin-bottom:16px">Submit a Ticket</h2>
+      <form action="/php/upload/upload.php" method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+          <label>Your Email</label>
+          <input type="email" name="email" placeholder="you@example.com" required>
+        </div>
+        <div class="form-group">
+          <label>Issue Category</label>
+          <select name="category">
+            <option>Order Problem</option>
+            <option>Payment Issue</option>
+            <option>Technical Support</option>
+            <option>Refund Request</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Message</label>
+          <textarea name="message" rows="4" placeholder="Describe your issue…"></textarea>
+        </div>
+        <!-- UPLOAD-001: unrestricted file upload -->
+        <div class="form-group">
+          <label>Attach Screenshot (optional)</label>
+          <input type="file" name="file" accept="*/*">
+          <div class="form-hint">JPG, PNG, PDF. No validation on file type.</div>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit Ticket</button>
+      </form>
+    </div>
+
+    <!-- Diagnostics — SSRF + CMDI -->
+    <div class="card" style="padding:24px">
+      <h2 style="font-size:16px;font-weight:600;margin-bottom:16px">Network Diagnostics</h2>
+      <p class="text-sm text-muted mb-4">Use our diagnostic tools to test connectivity:</p>
+
+      <!-- CMDI-001: OS command injection -->
+      <form action="/php/cmdi/ping.php" method="GET" style="margin-bottom:16px">
+        <div class="form-group">
+          <label>Ping a Host</label>
+          <div style="display:flex;gap:8px">
+            <input type="text" name="host" placeholder="e.g. 8.8.8.8" style="flex:1">
+            <button type="submit" class="btn btn-outline btn-sm">Ping</button>
+          </div>
+        </div>
+      </form>
+
+      <!-- PY-006: Python command injection -->
+      <form action="/py/ping" method="GET" style="margin-bottom:16px">
+        <div class="form-group">
+          <label>Check Host (Python)</label>
+          <div style="display:flex;gap:8px">
+            <input type="text" name="host" placeholder="hostname or IP" style="flex:1">
+            <button type="submit" class="btn btn-outline btn-sm">Check</button>
+          </div>
+        </div>
+      </form>
+
+      <!-- PY-005 / GO-001: SSRF via URL preview -->
+      <form action="/py/fetch" method="GET" style="margin-bottom:16px">
+        <div class="form-group">
+          <label>URL Preview Tool</label>
+          <div style="display:flex;gap:8px">
+            <input type="url" name="url" placeholder="https://example.com" style="flex:1">
+            <button type="submit" class="btn btn-outline btn-sm">Fetch</button>
+          </div>
+          <div class="form-hint">Check if a URL is reachable from our servers.</div>
+        </div>
+      </form>
+
+      <!-- GO-001: Go SSRF image proxy -->
+      <form action="/go/proxy" method="GET">
+        <div class="form-group">
+          <label>Image URL Proxy</label>
+          <div style="display:flex;gap:8px">
+            <input type="url" name="url" placeholder="https://example.com/image.jpg" style="flex:1">
+            <button type="submit" class="btn btn-outline btn-sm">Load</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Downloads section — LFI + path traversal -->
+  <div class="card" style="padding:24px;margin-top:24px">
+    <h2 style="font-size:16px;font-weight:600;margin-bottom:16px">Downloads & Documentation</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">
+      <!-- PY-004: path traversal in download -->
+      <a href="/py/download?file=welcome.txt" class="btn btn-outline">📄 Getting Started</a>
+      <a href="/py/download?file=../../etc/passwd" class="btn btn-outline">📋 User Manual</a>
+      <!-- GO-005: path traversal in Go -->
+      <a href="/go/file?file=readme.txt" class="btn btn-outline">📖 API Guide</a>
+      <a href="/go/file?file=../../../../etc/passwd" class="btn btn-outline">🔧 System Config</a>
+      <!-- JAVA-005: Spring path traversal -->
+      <a href="/java/files?file=readme.txt" class="btn btn-outline">☕ Java SDK</a>
+      <!-- LFI-001: PHP local file inclusion -->
+      <a href="/php/lfi/read.php?file=../../etc/passwd" class="btn btn-outline">📦 PHP Client</a>
+    </div>
+  </div>
+
+  <!-- Debug console — PY-007 -->
+  <div class="card" style="padding:24px;margin-top:24px">
+    <h2 style="font-size:16px;font-weight:600;margin-bottom:8px">⚙️ Developer Debug Console</h2>
+    <p class="text-sm text-muted mb-4">For internal use only. Reports issues directly.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <a href="/py/console" class="btn btn-outline btn-sm">Python Console</a>
+      <a href="/api/internal/debug" class="btn btn-outline btn-sm">API Debug</a>
+      <a href="/java/actuator/env" class="btn btn-outline btn-sm">Spring Actuator</a>
+      <a href="/go/error?input=boom" class="btn btn-outline btn-sm">Go Error Page</a>
+      <a href="/php/config/debug.php?input=test" class="btn btn-outline btn-sm">PHP Debug</a>
+      <a href="/php/config/phpinfo.php" class="btn btn-outline btn-sm">PHP Info</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -179,6 +179,25 @@ services:
       <<: *hc-defaults
     restart: unless-stopped
 
+  # ── ShopForge Portal ─────────────────────────────────────────────────────
+  shopforge:
+    build: ./services/shopforge
+    image: vulnforge/shopforge:latest
+    container_name: vulnforge-shopforge
+    profiles: [core, full, api, waf, crawl]
+    networks:
+      - lab_net
+    environment:
+      - PORT=3100
+    <<: *no-new-privileges
+    deploy:
+      resources:
+        limits: { cpus: "0.25", memory: 128M }
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:3100/health')"]
+      <<: *hc-defaults
+    restart: unless-stopped
+
   # ── Spring Service ────────────────────────────────────────────────────────
   spring-svc:
     build: ./services/spring-svc

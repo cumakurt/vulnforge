@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Search — ShopForge{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top:32px;padding-bottom:48px">
+  <div class="breadcrumb"><a href="/">Home</a><span>Search</span></div>
+
+  <h1 style="font-size:22px;font-weight:700;margin-bottom:20px">
+    {% if q %}Search results for: <em style="color:var(--brand)">{{ q }}</em>
+    {% else %}Search Products{% endif %}
+  </h1>
+
+  <!-- Search form — submits to reflected XSS (XSS-001) and SSTI (PY-001) -->
+  <form action="/search" method="GET" style="display:flex;gap:10px;margin-bottom:28px">
+    <input type="text" name="q" value="{{ q }}" placeholder="Search for products…"
+           style="flex:1;max-width:500px;padding:10px 16px;border:2px solid var(--border);border-radius:8px;font-size:14px;outline:none">
+    <button type="submit" class="btn btn-primary">Search</button>
+  </form>
+
+  <!-- XSS reflected endpoint — rendered as "greeting widget" -->
+  <div class="card" style="padding:20px;margin-bottom:24px">
+    <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Personalised greeting:</div>
+    <!-- XSS-001: name param reflected without encoding -->
+    <iframe src="/php/xss/reflected.php?name={{ q or 'guest' }}"
+            style="width:100%;height:60px;border:none" title="Greeting"></iframe>
+  </div>
+
+  <!-- SSTI endpoint exposed as "AI product recommender" -->
+  <div class="card" style="padding:20px;margin-bottom:24px">
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px">🤖 AI Recommendations</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:12px">
+      Powered by our Python template engine:
+    </div>
+    <a href="/py/ssti?name={{ q or 'World' }}" class="btn btn-outline btn-sm">
+      Get recommendations for "{{ q or 'World' }}"
+    </a>
+    <!-- Also try: /py/ssti?name={{7*7}} -->
+  </div>
+
+  <!-- Search results from SQLI -->
+  <div>
+    <div style="font-size:14px;color:var(--muted);margin-bottom:16px">
+      Showing results from product database:
+      <a href="/php/sqli/products.php?id=1 OR 1=1">View all matching products</a>
+    </div>
+
+    <div class="grid-4">
+      {% for i in range(1, 9) %}
+      <a href="/php/sqli/products.php?id={{ i }}" class="product-card" style="text-decoration:none;color:inherit">
+        <div class="thumb">🔍</div>
+        <div class="body">
+          <div class="name">{{ q or 'Product' }} Result {{ i }}</div>
+          <div class="text-muted text-sm">Matches your query</div>
+          <div class="price">${{ (i * 19 + 9.99)|round(2) }}</div>
+          <div class="actions">
+            <button class="btn btn-primary btn-sm" style="flex:1">Add to Cart</button>
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Hidden search endpoints exposed in page source -->
+  <!--
+    Advanced search:
+    /php/sqli/search.php?q=laptop&sort=price ASC
+    /php/sqli/union_search.php?term=1 UNION SELECT username,password,3,4,5,6 FROM users
+    /api/v1/products?q=laptop&limit=5000
+  -->
+</div>
+{% endblock %}

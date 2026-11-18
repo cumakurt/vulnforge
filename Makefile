@@ -20,7 +20,7 @@ help:
 	@echo "make score       Score tests/fixtures/sample_findings.json"
 
 install:
-	./docker_install.sh
+	./docker_install.sh --profile full
 
 up:
 	$(COMPOSE) --profile core up -d --build

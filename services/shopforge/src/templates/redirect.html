@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Redirecting… — ShopForge{% endblock %}
+{% block content %}
+<div class="container" style="max-width:500px;padding-top:80px;text-align:center">
+  <div style="font-size:48px;margin-bottom:16px">↪️</div>
+  <h1 style="font-size:22px;font-weight:700;margin-bottom:8px">Redirecting You</h1>
+  <p class="text-muted mb-6">You are being redirected to our partner site.</p>
+
+  <div class="card" style="padding:24px;text-align:left;margin-bottom:16px">
+    <div class="form-group">
+      <label>Destination URL</label>
+      <!-- REDIR-001 / PY-008 / GO-007: open redirect endpoints -->
+      <input type="url" id="dest" value="https://evil.example/" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:6px">
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <a id="php-redir" href="/php/redirect/redirect.php?url=https://evil.example/" class="btn btn-primary">PHP Redirect →</a>
+      <a id="py-redir" href="/py/redirect?next=https://evil.example/" class="btn btn-outline">Python Redirect →</a>
+      <a id="go-redir" href="/go/continue?next=https://evil.example/" class="btn btn-outline">Go Redirect →</a>
+      <a id="java-redir" href="/java/redirect?url=https://evil.example/" class="btn btn-outline">Java Redirect →</a>
+    </div>
+  </div>
+
+  <div class="card" style="padding:16px;text-align:left">
+    <div class="text-sm text-muted mb-4">OAuth redirect test:</div>
+    <a href="/auth/authorize?response_type=code&client_id=shopforge&redirect_uri=https://evil.example/cb&scope=read" class="btn btn-outline btn-sm">OAuth → evil.example</a>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('dest').addEventListener('input', function() {
+  const url = encodeURIComponent(this.value);
+  document.getElementById('php-redir').href = '/php/redirect/redirect.php?url=' + this.value;
+  document.getElementById('py-redir').href  = '/py/redirect?next=' + this.value;
+  document.getElementById('go-redir').href  = '/go/continue?next=' + this.value;
+  document.getElementById('java-redir').href = '/java/redirect?url=' + this.value;
+});
+</script>
+{% endblock %}
