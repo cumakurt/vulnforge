@@ -95,6 +95,20 @@ crawl and session settings.
 
 Control twins (hardened safe endpoints) live next to each vulnerable endpoint.
 
+### Passive scanner fixtures
+
+Open `http://127.0.0.1:8000/scan-fixtures` or follow **Passive scanner
+fixtures** in the ShopForge footer. Each case has two fixed GET responses.
+Sample A contains the expected synthetic signal. Sample B is its control.
+
+- `version-header` exposes a fictional version in `X-Powered-By` in sample A. Both return HTTP 200 and the same body.
+- `error-detail` displays a fictional stack trace in sample A. Both return HTTP 500.
+- `internal-hostname` includes a fictional `.invalid` hostname in sample A. Both return HTTP 200.
+
+Scope a passive fixture scan to `/scan-fixtures` and compare findings with the
+expectations above. The existing catalog scorer treats fixture findings as
+unmatched, so exclude this prefix when scoring a catalog run.
+
 ### HTTPS listener
 
 ```

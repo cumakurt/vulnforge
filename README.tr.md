@@ -93,6 +93,22 @@ tarayıcının gezinme ve oturum ayarlarına bağlıdır.
 | `/java/` | spring-svc (Java 17) | XXE, XMLDecoder RCE, EL enjeksiyonu, JNDI, zayıf kripto |
 | `/go/` | go-svc (Go 1.22) | SSRF, race condition, path traversal, CMDi, OTP kaba kuvvet |
 
+### Pasif tarama örnekleri
+
+ShopForge altbilgisindeki **Passive scanner fixtures** bağlantısını açın veya
+`http://127.0.0.1:8000/scan-fixtures` adresine gidin. Her senaryoda iki sabit
+GET yanıtı bulunur. Sample A beklenen sentetik sinyali içerir. Sample B kontrol
+yanıtıdır.
+
+- `version-header` örneğinde Sample A, `X-Powered-By` başlığında kurgusal bir sürüm gösterir. İki yanıt da HTTP 200 ve aynı gövdeyi döndürür.
+- `error-detail` örneğinde Sample A, kurgusal bir hata izi gösterir. İki yanıt da HTTP 500 döndürür.
+- `internal-hostname` örneğinde Sample A, kurgusal bir `.invalid` ana makine adı içerir. İki yanıt da HTTP 200 döndürür.
+
+Pasif taramanın kapsamını `/scan-fixtures` ile sınırlandırıp bulguları
+yukarıdaki beklentilerle karşılaştırın. Katalog puanlayıcısı bu örneklerin
+bulgularını eşleşmemiş sayar. Katalog taramalarını puanlarken bu öneki kapsam
+dışında tutun.
+
 ### Demo kimlik bilgileri
 
 | Servis | Kullanıcı | Şifre |
