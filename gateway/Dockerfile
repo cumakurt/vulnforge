@@ -22,7 +22,7 @@ WORKDIR /app/shopforge
 COPY services/shopforge/requirements.txt .
 RUN python3 -m venv /opt/shopforge && \
     /opt/shopforge/bin/pip install --no-cache-dir -r requirements.txt
-COPY services/shopforge/main.py services/shopforge/catalog.json ./
+COPY services/shopforge/main.py services/shopforge/business.py services/shopforge/store.py services/shopforge/catalog.json ./
 COPY services/shopforge/src/ ./src/
 COPY gateway/start.sh /usr/local/bin/start-gateway
 

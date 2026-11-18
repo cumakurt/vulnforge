@@ -62,7 +62,7 @@ için Compose başlatma komutuna `--remove-orphans` ekleyin.
 
 ```bash
 make down      # tüm container'ları durdur
-make reset     # veritabanlarını ve olay günlüğünü sıfırla
+make reset     # eski lab verilerini ve olayları sıfırla; ShopForge verileri korunur
 ```
 
 ---
@@ -75,10 +75,21 @@ make reset     # veritabanlarını ve olay günlüğünü sıfırla
 http://127.0.0.1:8000/
 ```
 
-ShopForge kataloğunda adı, fiyatı, kategorisi ve açıklaması olan 16 kurgusal
-ürün bulunur. Katalog ve ürün detay sayfaları aynı kayıtları
-`services/shopforge/catalog.json` dosyasından alır. Tarama kapsamı,
-tarayıcının gezinme ve oturum ayarlarına bağlıdır.
+ShopForge; kayıt, oturum açma/kapatma, profil düzenleme, sepet, istek listesi,
+sipariş oluşturma ve takip etme, destek talepleri, blog yorumları ve bülten
+aboneliği işlemlerinin çalıştığı bir mağazadır. Yönetici panelinden kullanıcı,
+ürün ve sipariş yönetimi yapılabilir. İlk açılışta
+`services/shopforge/catalog.json` dosyasından 16 kurgusal ürün yüklenir;
+değişiklikler SQLite veritabanında ve kalıcı Docker volume'unda saklanır.
+
+Mağaza sayfalarında zafiyet adları, saldırı örnekleri, test hesapları veya
+tanılama ipuçları gösterilmez. Yapılandırma, sentetik hesaplar, kalıcılık ve
+tarama kapsamı için [ShopForge rehberine](docs/shopforge.md) bakın.
+
+Kurulumu `--port 18000` ile yaptıysanız adres `http://127.0.0.1:18000/` olur.
+Tarama kapsamı, tarayıcının gezinme ve oturum ayarlarına bağlıdır. `/` üzerinden
+başlayan tarama mağazayı dolaşır; eski lab servislerini de kapsamak için aşağıdaki
+yolları ve [zafiyet kataloğunu](docs/tr/zafiyet-katalogu.md) kullanın.
 
 | Yol | Servis | Zafiyet grupları |
 |---|---|---|
@@ -95,17 +106,19 @@ tarayıcının gezinme ve oturum ayarlarına bağlıdır.
 
 ### Pasif tarama örnekleri
 
-ShopForge altbilgisindeki **Passive scanner fixtures** bağlantısını açın veya
-`http://127.0.0.1:8000/scan-fixtures` adresine gidin. Her senaryoda iki sabit
-GET yanıtı bulunur. Sample A beklenen sentetik sinyali içerir. Sample B kontrol
-yanıtıdır.
+`/scan-fixtures/{case}/{variant}` adresine doğrudan istek gönderin. Aşağıdaki
+senaryolardan birini ve varyant olarak `sample-a` veya `sample-b` kullanın.
+Örnek: `http://127.0.0.1:18000/scan-fixtures/version-header/sample-a`.
+Sample A beklenen sentetik sinyali içerir; Sample B kontrol yanıtıdır.
+Bir örnek dizin sayfası sunulmaz: `/scan-fixtures` 404 döndürür ve mağazadan
+örnek yanıtlarına bağlantı verilmez.
 
 - `version-header` örneğinde Sample A, `X-Powered-By` başlığında kurgusal bir sürüm gösterir. İki yanıt da HTTP 200 ve aynı gövdeyi döndürür.
 - `error-detail` örneğinde Sample A, kurgusal bir hata izi gösterir. İki yanıt da HTTP 500 döndürür.
 - `internal-hostname` örneğinde Sample A, kurgusal bir `.invalid` ana makine adı içerir. İki yanıt da HTTP 200 döndürür.
 
-Pasif taramanın kapsamını `/scan-fixtures` ile sınırlandırıp bulguları
-yukarıdaki beklentilerle karşılaştırın. Katalog puanlayıcısı bu örneklerin
+Pasif taramayı altı örnek yanıt URL'siyle başlatıp bulguları yukarıdaki
+beklentilerle karşılaştırın. Katalog puanlayıcısı bu örneklerin
 bulgularını eşleşmemiş sayar. Katalog taramalarını puanlarken bu öneki kapsam
 dışında tutun.
 
@@ -113,9 +126,16 @@ dışında tutun.
 
 | Servis | Kullanıcı | Şifre |
 |---|---|---|
+| ShopForge yöneticisi | `admin` | `admin123` |
+| ShopForge müşterileri | `alice`, `bob` | `alice123` |
 | PHP web / Node API / OAuth | `alice` | `password1` |
 | PHP admin | `admin` | `admin123` |
 | Legacy admin | `admin` | `admin` (kasıtlı varsayılan kimlik) |
+
+Bu hesaplar yalnızca yerel laboratuvar için üretilmiştir. İlk başlatmadan önce
+`SHOPFORGE_ADMIN_PASSWORD` ve `SHOPFORGE_USER_PASSWORD` değişkenleriyle ShopForge
+başlangıç şifrelerini belirleyebilirsiniz. Mevcut hesapların kayıtlı şifreleri
+korunur. Portal oturumları ve eski servislerin token'ları birbirinden ayrıdır.
 
 ---
 
@@ -127,7 +147,7 @@ dışında tutun.
 | `http://127.0.0.1:9100/__lab/vulns` | Ground truth (99 zafiyet) |
 | `http://127.0.0.1:9100/__lab/events` | Tetiklenen zafiyet olayları |
 | `http://127.0.0.1:9100/__lab/docs` | İnteraktif API dokümantasyonu |
-| `curl -X POST http://127.0.0.1:9100/__lab/reset` | Tüm durumu sıfırla |
+| `curl -X POST http://127.0.0.1:9100/__lab/reset` | Eski lab verilerini ve olayları sıfırla; ShopForge verilerini koru |
 | `http://127.0.0.1:9000/` | OOB geri çağrı toplayıcı |
 
 ---

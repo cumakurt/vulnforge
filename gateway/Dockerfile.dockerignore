@@ -9,6 +9,8 @@
 !services/
 !services/shopforge/
 !services/shopforge/main.py
+!services/shopforge/business.py
+!services/shopforge/store.py
 !services/shopforge/catalog.json
 !services/shopforge/requirements.txt
 !services/shopforge/src/

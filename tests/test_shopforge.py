@@ -15,20 +15,27 @@ class ShopForgeTest(unittest.TestCase):
 
     def test_gateway_serves_shopforge(self):
         self.assertIn("ShopForge", self.page("/"))
-        self.assertIn("VulnForge Lab Gateway", self.page("/__status"))
+        self.assertIn("ShopForge Gateway", self.page("/__status"))
 
     def test_catalog_and_detail_share_the_synthetic_product(self):
         catalog = self.page("/products")
         detail = self.page("/product/5")
         self.assertIn("16 items", catalog)
-        for text in ("CedarJet M220 Printer", "Electronics", "$119.00",
-                     "Compact duplex printer with a 150-sheet tray."):
+        for text in (
+            "CedarJet M220 Printer",
+            "Electronics",
+            "$119.00",
+            "Compact duplex printer with a 150-sheet tray.",
+        ):
             with self.subTest(text=text):
                 self.assertIn(text, catalog)
                 self.assertIn(text, detail)
 
-    def test_product_outside_demo_catalog_keeps_its_detail_page(self):
-        self.assertIn("Product 0099", self.page("/product/99"))
+    def test_unknown_product_returns_not_found(self):
+        with self.assertRaises(HTTPError) as error:
+            self.page("/product/999999")
+        self.assertEqual(error.exception.code, 404)
+        error.exception.close()
 
     def fixture_response(self, case, sample, expected_status=200):
         try:
@@ -39,12 +46,12 @@ class ShopForgeTest(unittest.TestCase):
             self.assertEqual(response.code, expected_status)
             return response.headers, response.read().decode("utf-8")
 
-    def test_portal_links_to_all_six_fixture_responses(self):
-        self.assertIn('href="/scan-fixtures"', self.page("/"))
-        index = self.page("/scan-fixtures")
-        for case in ("version-header", "error-detail", "internal-hostname"):
-            for sample in ("sample-a", "sample-b"):
-                self.assertIn(f'href="/scan-fixtures/{case}/{sample}"', index)
+    def test_storefront_does_not_advertise_response_fixtures(self):
+        self.assertNotIn("/scan-fixtures", self.page("/"))
+        with self.assertRaises(HTTPError) as error:
+            self.page("/scan-fixtures")
+        self.assertEqual(error.exception.code, 404)
+        error.exception.close()
 
     def test_version_header_only_appears_in_sample_a(self):
         headers_a, body_a = self.fixture_response("version-header", "sample-a")
@@ -54,8 +61,12 @@ class ShopForgeTest(unittest.TestCase):
         self.assertNotIn("X-Powered-By", headers_b)
 
     def test_error_detail_only_appears_in_sample_a(self):
-        _, body_a = self.fixture_response("error-detail", "sample-a", expected_status=500)
-        _, body_b = self.fixture_response("error-detail", "sample-b", expected_status=500)
+        _, body_a = self.fixture_response(
+            "error-detail", "sample-a", expected_status=500
+        )
+        _, body_b = self.fixture_response(
+            "error-detail", "sample-b", expected_status=500
+        )
         signal, control = json.loads(body_a), json.loads(body_b)
         self.assertIn("Traceback", signal.pop("diagnostic"))
         self.assertEqual(signal, control)

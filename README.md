@@ -62,7 +62,7 @@ the Compose start command to remove the old ShopForge container.
 
 ```bash
 make down      # stop all containers
-make reset     # reset databases and event log
+make reset     # reset legacy lab fixtures and events (not the ShopForge database)
 ```
 
 ---
@@ -75,10 +75,22 @@ make reset     # reset databases and event log
 http://127.0.0.1:8000/
 ```
 
-ShopForge includes 16 fictional products with names, prices, categories and
-descriptions. The catalog and product detail pages share the seed records in
-`services/shopforge/catalog.json`. Scan coverage depends on the scanner's
-crawl and session settings.
+ShopForge is a working store with registration and cookie-based sessions,
+profile editing, a cart and wishlist, checkout, orders, support requests,
+blog comments and newsletter subscriptions. Administrators can manage users,
+products and orders. Its 16 initial fictional products come from
+`services/shopforge/catalog.json`; changes are stored in SQLite in a Docker
+volume and survive container recreation.
+
+The storefront presents ordinary shopping and account pages. It does not
+advertise vulnerability names, payloads, test accounts or diagnostic shortcuts.
+For setup, synthetic accounts, persistence and scanner scope, see
+[the ShopForge guide](docs/shopforge.md).
+
+Use `http://127.0.0.1:18000/` when installed with `--port 18000`. Coverage depends
+on the scanner's crawl and session settings. A crawl starting at `/` exercises
+the store; deeper legacy fixture coverage requires the paths documented below
+and in [the vulnerability catalog](docs/vulnerability-catalog.md).
 
 | Path | Service (backend) | Vulnerability groups |
 |---|---|---|
@@ -97,15 +109,18 @@ Control twins (hardened safe endpoints) live next to each vulnerable endpoint.
 
 ### Passive scanner fixtures
 
-Open `http://127.0.0.1:8000/scan-fixtures` or follow **Passive scanner
-fixtures** in the ShopForge footer. Each case has two fixed GET responses.
+Request `/scan-fixtures/{case}/{variant}` directly, using one of the cases
+below and `sample-a` or `sample-b` as the variant. For example:
+`http://127.0.0.1:18000/scan-fixtures/version-header/sample-a`.
 Sample A contains the expected synthetic signal. Sample B is its control.
+There is no fixture index page: `/scan-fixtures` returns 404, and the storefront
+does not link to the fixture responses.
 
 - `version-header` exposes a fictional version in `X-Powered-By` in sample A. Both return HTTP 200 and the same body.
 - `error-detail` displays a fictional stack trace in sample A. Both return HTTP 500.
 - `internal-hostname` includes a fictional `.invalid` hostname in sample A. Both return HTTP 200.
 
-Scope a passive fixture scan to `/scan-fixtures` and compare findings with the
+Seed a passive fixture scan with the six response URLs and compare findings with the
 expectations above. The existing catalog scorer treats fixture findings as
 unmatched, so exclude this prefix when scoring a catalog run.
 
@@ -119,11 +134,16 @@ https://127.0.0.1:8443/   (status response with a self-signed certificate)
 
 | Service | Username | Password |
 |---|---|---|
+| ShopForge administrator | `admin` | `admin123` |
+| ShopForge customers | `alice`, `bob` | `alice123` |
 | PHP web / Node API / OAuth | `alice` | `password1` |
 | PHP admin | `admin` | `admin123` |
 | Legacy admin | `admin` | `admin` (intentional default credential) |
 
-All data is synthetic. No real personal data or secrets included.
+All data is synthetic. These are local lab accounts, not real credentials.
+ShopForge seed passwords can be set with `SHOPFORGE_ADMIN_PASSWORD` and
+`SHOPFORGE_USER_PASSWORD` before the first start. Existing accounts retain
+their saved passwords. Portal sessions and legacy service tokens are separate.
 
 ---
 
@@ -135,7 +155,7 @@ All data is synthetic. No real personal data or secrets included.
 | `http://127.0.0.1:9100/__lab/vulns` | Ground truth (all 99 vulns) |
 | `http://127.0.0.1:9100/__lab/events` | Triggered vuln events |
 | `http://127.0.0.1:9100/__lab/docs` | Interactive API docs |
-| `curl -X POST http://127.0.0.1:9100/__lab/reset` | Reset all state |
+| `curl -X POST http://127.0.0.1:9100/__lab/reset` | Reset legacy fixtures and events; preserve ShopForge data |
 | `http://127.0.0.1:9000/` | OOB callback collector |
 
 ---

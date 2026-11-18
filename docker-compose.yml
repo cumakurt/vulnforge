@@ -51,6 +51,12 @@ services:
       context: .
       dockerfile: gateway/Dockerfile
     init: true
+    environment:
+      - SHOPFORGE_DB=/app/shopforge/data/shopforge.sqlite3
+      - SHOPFORGE_ADMIN_PASSWORD=${SHOPFORGE_ADMIN_PASSWORD:-admin123}
+      - SHOPFORGE_USER_PASSWORD=${SHOPFORGE_USER_PASSWORD:-alice123}
+    volumes:
+      - shopforge_data:/app/shopforge/data
     image: vulnforge/gateway:latest
     container_name: vulnforge-gateway
     profiles: [core, full, api, waf]
@@ -307,5 +313,7 @@ networks:
 # VOLUMES
 # ────────────────────────────────────────────────────────────────────────────
 volumes:
+  shopforge_data:
+    name: vulnforge_shopforge_data
   mysql_data:
     name: vulnforge_mysql_data

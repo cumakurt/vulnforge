@@ -6,7 +6,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY src/ ./src/
-COPY main.py catalog.json ./
+COPY main.py business.py store.py catalog.json ./
 
 ENV PYTHONUNBUFFERED=1
 ENV PORT=3100

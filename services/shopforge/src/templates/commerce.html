@@ -1,0 +1,552 @@
+{% extends "base.html" %}
+{% set titles = {'login':'Sign in','admin_login':'Sign in','register':'Create an account','profile':'Your account','products':'All products','search':'Search results','detail':'Product details','cart':'Shopping cart','wishlist':'Your wishlist','checkout':'Checkout','orders':'Your orders','support':'Customer support','newsletter':'Stay in the loop','blog':'ShopForge Journal','post':'ShopForge Journal','admin':'Administration','admin_users':'Manage customers','admin_products':'Manage products','admin_orders':'Manage orders','admin_tickets':'Support requests','admin_posts':'Manage journal','api_docs':'Developer resources','about':'About ShopForge','download':'Product catalogue','redirect':'Continue to our partner','error':'Unable to complete your request'} %}
+{% block title %}{{ titles.get(page, 'ShopForge') }} — ShopForge{% endblock %}
+{% macro csrf() %}
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+{% endmacro %}
+{% macro field(name, label, value='', type='text', required=true) %}
+<div class="form-group">
+<label>{{ label }}<input type="{{ type }}" name="{{ name }}" value="{{ value if value is not none else '' }}" {% if required %}required{% endif %}{% if type == 'password' %} minlength="8"{% endif %}{% if type == 'number' %} min="0" step="1"{% endif %}>
+</label>
+</div>
+{% endmacro %}
+{% macro area(name, label, value='', required=true) %}
+<div class="form-group">
+<label>{{ label }}<textarea name="{{ name }}" rows="4" {% if required %}required{% endif %}>{{ value or '' }}</textarea>
+</label>
+</div>
+{% endmacro %}
+{% macro role_select(role='user') %}
+<div class="form-group">
+<label>Role<select name="role">
+<option value="user" {% if role == 'user' %}selected{% endif %}>Customer</option>
+<option value="admin" {% if role == 'admin' %}selected{% endif %}>Administrator</option>
+</select>
+</label>
+</div>
+{% endmacro %}
+{% macro product_fields(product={}) %}{{ field('name','Product name',product.name|default('')) }}{{ field('category','Category',product.category|default('')) }}{{ field('price','Price (USD)',product.price|default('')) }}{{ field('stock','Stock available',product.stock|default(0),'number') }}{{ area('description','Description',product.description|default('')) }}{% endmacro %}
+{% macro product_cards(catalog, wishlist=false) %}
+<div class="grid-4">
+{% for product in catalog %}
+<article class="card product-card">
+<a href="/product/{{ product.id }}">
+<div class="product-thumb">{{ product.category }}</div>
+</a>
+<div class="text-muted text-sm">{{ product.category }}</div>
+<h2>
+<a href="/product/{{ product.id }}">{{ product.name }}</a>
+</h2>
+<p class="product-description">{{ product.description }}</p>
+<div class="product-price">${{ product.price }}</div>
+<div class="text-muted text-sm">
+{% if product.stock > 0 %}{{ product.stock }} available{% else %}Out of stock{% endif %}
+</div>
+<div class="actions">
+<form action="/cart/add" method="post">{{ csrf() }}<input type="hidden" name="product_id" value="{{ product.id }}">
+<input type="hidden" name="quantity" value="1">
+<button type="submit" class="btn btn-primary btn-sm" {% if product.stock <= 0 %}disabled{% endif %}>Add to cart</button>
+</form>
+<form action="/wishlist/{{ 'remove' if wishlist else 'add' }}" method="post">{{ csrf() }}<input type="hidden" name="product_id" value="{{ product.id }}">
+<button class="btn btn-outline btn-sm" type="submit">{{ 'Remove' if wishlist else 'Save' }}</button>
+</form>
+</div>
+</article>
+{% else %}
+<p class="empty">No products to display.</p>
+{% endfor %}
+</div>
+{% endmacro %}
+{% macro order_card(order, admin=false) %}
+<article class="card">
+<div class="section-heading">
+<h2>Order #{{ order.id }}</h2>
+<span class="badge">{{ order.status|title }}</span>
+</div>
+<p class="text-muted text-sm">{{ order.created_at }}{% if admin and order.username is defined %} · {{ order.username }}{% endif %}
+</p>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Quantity</th>
+<th>Unit price</th>
+<th>Amount</th>
+</tr>
+</thead>
+<tbody>
+{% for line in order.lines %}
+<tr>
+<td>{{ line.name }}</td>
+<td>{{ line.quantity }}</td>
+<td>${{ '%.2f'|format(line.unit_price / 100) }}</td>
+<td>${{ '%.2f'|format(line.unit_price * line.quantity / 100) }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+<p>
+<strong>Total: ${{ '%.2f'|format(order.total / 100) }}</strong>
+</p>
+<p class="text-muted preserve-lines">Delivery address: {{ order.address }}</p>
+{% if admin %}
+<form class="actions" action="/admin/orders/{{ order.id }}/status" method="post">{{ csrf() }}<label>Status <select name="status">
+{% for status in ['pending','processing','shipped','completed','cancelled'] %}
+<option value="{{ status }}" {% if order.status == status %}selected{% endif %}>{{ status|title }}</option>
+{% endfor %}
+</select>
+</label>
+<button class="btn btn-primary btn-sm" type="submit">Update status</button>
+</form>
+{% elif order.status == 'pending' %}
+<form action="/orders/{{ order.id }}/cancel" method="post">{{ csrf() }}<button class="btn btn-outline btn-sm" type="submit">Cancel order</button>
+</form>
+{% endif %}
+</article>
+{% endmacro %}
+{% block content %}
+<main class="container page">
+{% if page.startswith('admin') and page != 'admin_login' %}
+<nav class="admin-nav" aria-label="Administration">
+<a href="/admin">Overview</a>
+<a href="/admin/users">Customers</a>
+<a href="/admin/products">Products</a>
+<a href="/admin/orders">Orders</a>
+<a href="/admin/tickets">Support</a>
+<a href="/admin/posts">Journal</a>
+</nav>
+{% endif %}
+{% if page not in ['detail','post'] %}
+<h1>{{ titles.get(page, 'ShopForge') }}</h1>
+{% endif %}
+
+{% if page in ['login','admin_login','register'] %}
+<div class="card narrow">
+<form action="{{ '/register' if page == 'register' else '/login' }}" method="post">{{ csrf() }}{{ field('username','Username') }}{% if page == 'register' %}{{ field('email','Email address','','email') }}{% endif %}{{ field('password','Password','','password') }}{% if page == 'register' %}{{ field('password_confirm','Confirm password','','password') }}{% endif %}
+<button class="btn btn-primary" type="submit">{{ 'Create account' if page == 'register' else 'Sign in' }}</button>
+</form>
+<p class="text-muted text-sm">
+{% if page == 'register' %}Already a customer? <a href="/login">Sign in</a>
+{% else %}New to ShopForge? <a href="/register">Create an account</a>
+{% endif %}
+</p>
+</div>
+
+{% elif page == 'profile' %}
+<div class="grid-2">
+<section class="card">
+<h2>Account information</h2>
+<p class="text-muted">{{ user.username }} · Customer #{{ user.id }}</p>
+<form action="/profile" method="post">{{ csrf() }}{{ field('email','Email address',user.email,'email') }}{{ field('phone','Phone number',user.phone,'tel',false) }}{{ area('address','Delivery address',user.address,false) }}<button class="btn btn-primary" type="submit">Save changes</button>
+</form>
+</section>
+<section class="card">
+<h2>Change password</h2>
+<form action="/profile/password" method="post">{{ csrf() }}{{ field('current_password','Current password','','password') }}{{ field('new_password','New password','','password') }}<button class="btn btn-primary" type="submit">Update password</button>
+</form>
+<p class="text-sm text-muted">Use at least eight characters for your new password.</p>
+<div class="actions">
+<a href="/orders">Order history</a>
+<a href="/wishlist">Wishlist</a>
+<a href="/support">Contact support</a>
+</div>
+</section>
+</div>
+
+{% elif page in ['products','search'] %}
+<form class="card mb-4" action="/products" method="get">
+<div class="grid-3">
+<div class="form-group">
+<label for="filter-q">Search</label>
+<input id="filter-q" type="search" name="q" value="{{ q|default('') }}" placeholder="Product name or description">
+</div>
+<div class="form-group">
+<label for="filter-category">Category</label>
+<select id="filter-category" name="category">
+{% for value,label in [('','All categories'),('electronics','Electronics'),('laptops','Laptops'),('software','Software'),('accessories','Accessories'),('gaming','Gaming'),('networking','Networking'),('security','Security')] %}
+<option value="{{ value }}" {% if category|default('')|lower == value %}selected{% endif %}>{{ label }}</option>
+{% endfor %}
+</select>
+</div>
+<div class="form-group">
+<label for="filter-sort">Sort by</label>
+<select id="filter-sort" name="sort">
+{% for value,label in [('name','Name: A–Z'),('price_asc','Price: low to high'),('price_desc','Price: high to low')] %}
+<option value="{{ value }}" {% if sort|default('name') == value %}selected{% endif %}>{{ label }}</option>
+{% endfor %}
+</select>
+</div>
+</div>
+<button class="btn btn-primary" type="submit">Apply filters</button> <a class="btn btn-outline" href="/products">Clear filters</a>
+</form>
+<p class="text-muted">{{ catalog|length }} items{% if q %} matching “{{ q }}”{% endif %}
+</p>{{ product_cards(catalog) }}
+
+{% elif page == 'detail' %}
+{% if product %}
+<div class="grid-2">
+<div class="card">
+<div class="product-thumb" style="height:280px;font-size:20px">{{ product.category }}</div>
+</div>
+<article>
+<a class="text-sm" href="/products">← All products</a>
+<h1>{{ product.name }}</h1>
+<p class="text-muted">{{ product.category }} · SKU-{{ product.id }}</p>
+<p class="preserve-lines">{{ product.description }}</p>
+<p class="product-price">${{ product.price }}</p>
+<p class="text-muted">
+{% if product.stock > 0 %}{{ product.stock }} available{% else %}Currently out of stock{% endif %}
+</p>
+<div class="actions">
+<form class="actions" action="/cart/add" method="post">{{ csrf() }}<input type="hidden" name="product_id" value="{{ product.id }}">
+<label>Quantity <input style="width:70px" type="number" name="quantity" value="1" min="1" max="{{ product.stock }}" required>
+</label>
+<button class="btn btn-primary" type="submit" {% if product.stock <= 0 %}disabled{% endif %}>Add to cart</button>
+</form>
+<form action="/wishlist/add" method="post">{{ csrf() }}<input type="hidden" name="product_id" value="{{ product.id }}">
+<button class="btn btn-outline" type="submit">Save to wishlist</button>
+</form>
+</div>
+</article>
+</div>
+<section class="section">
+<h2>Customer reviews</h2>
+<div class="stack">
+{% for review in reviews %}
+<article class="card">
+<strong>{{ review.username }}</strong>
+<p class="preserve-lines">{{ review.body }}</p>
+</article>
+{% else %}
+<p class="text-muted">Be the first to share your experience.</p>
+{% endfor %}
+<form class="card" action="/product/{{ product.id }}/reviews" method="post">{{ csrf() }}{{ area('body','Your review') }}<button class="btn btn-primary" type="submit">Post review</button>
+</form>
+</div>
+</section>
+{% else %}
+<h1>Product unavailable</h1>
+<p>This product is no longer available. <a href="/products">Browse our collection</a>.</p>
+{% endif %}
+
+{% elif page == 'cart' %}
+{% if items %}
+<div class="card table-wrap">
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Unit price</th>
+<th>Quantity</th>
+<th>Subtotal</th>
+<th>
+</th>
+</tr>
+</thead>
+<tbody>
+{% for item in items %}
+<tr>
+<td>
+<a href="/product/{{ item.product_id }}">{{ item.name }}</a>
+</td>
+<td>${{ '%.2f'|format(item.price / 100) }}</td>
+<td>
+<form class="actions" action="/cart/update" method="post">{{ csrf() }}<input type="hidden" name="product_id" value="{{ item.product_id }}">
+<label>
+<span class="text-sm">Quantity</span> <input type="number" style="width:65px" name="quantity" value="{{ item.quantity }}" min="0" max="99" required>
+</label>
+<button class="btn btn-outline btn-sm" type="submit">Update</button>
+</form>
+</td>
+<td>${{ '%.2f'|format(item.subtotal / 100) }}</td>
+<td>
+<form action="/cart/remove" method="post">{{ csrf() }}<input type="hidden" name="product_id" value="{{ item.product_id }}">
+<button class="btn btn-danger btn-sm" type="submit">Remove</button>
+</form>
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+<p class="product-price">Total: ${{ '%.2f'|format(total / 100) }}</p>
+<a class="btn btn-primary" href="/checkout">Proceed to checkout</a>
+</div>
+{% else %}
+<p class="empty">Your cart is empty.</p>
+<a class="btn btn-primary" href="/products">Explore products</a>
+{% endif %}
+
+{% elif page == 'wishlist' %}
+{{ product_cards(catalog,true) }}
+
+{% elif page == 'checkout' %}
+<div class="grid-2">
+<section class="card">
+<h2>Delivery details</h2>
+<form action="/checkout" method="post">{{ csrf() }}{{ area('address','Delivery address',user.address) }}<p class="text-muted text-sm">No payment information is needed to place your order.</p>
+<button class="btn btn-primary" type="submit" {% if not items %}disabled{% endif %}>Place order</button>
+</form>
+</section>
+<section class="card">
+<h2>Order summary</h2>
+{% for item in items %}
+<p>{{ item.name }} × {{ item.quantity }} <strong>${{ '%.2f'|format(item.subtotal / 100) }}</strong>
+</p>
+{% else %}
+<p class="text-muted">Your cart is empty.</p>
+{% endfor %}
+<p class="product-price">Total: ${{ '%.2f'|format(total / 100) }}</p>
+<a href="/cart">Edit cart</a>
+</section>
+</div>
+
+{% elif page in ['orders','admin_orders'] %}
+<div class="stack">
+{% for order in orders %}{{ order_card(order,page == 'admin_orders') }}{% else %}
+<p class="empty">No orders yet.</p>
+{% endfor %}
+</div>
+
+{% elif page == 'support' %}
+<p class="text-muted">Tell us how we can help. You can follow the progress of your requests here.</p>
+<div class="grid-2">
+<form class="card" action="/support" method="post">{{ csrf() }}<h2>Send a request</h2>{{ field('subject','Subject') }}{{ area('body','How can we help?') }}<button class="btn btn-primary" type="submit">Submit request</button>
+</form>
+<div class="stack">
+{% for ticket in tickets %}
+<article class="card">
+<span class="badge">{{ ticket.status|title }}</span>
+<h2>#{{ ticket.id }} · {{ ticket.subject }}</h2>
+<p class="preserve-lines">{{ ticket.body }}</p>
+{% if ticket.reply %}
+<h3>Customer care</h3>
+<p class="preserve-lines">{{ ticket.reply }}</p>
+{% else %}
+<p class="text-muted text-sm">Our team will reply here.</p>
+{% endif %}
+</article>
+{% else %}
+<p class="empty">Your support requests will appear here.</p>
+{% endfor %}
+</div>
+</div>
+
+{% elif page == 'newsletter' %}
+<div class="card narrow">
+<p class="text-muted">New arrivals, useful ideas and occasional updates from ShopForge.</p>
+{% if subscribed %}
+<div class="alert alert-success">You're subscribed. Thank you for joining us.</div>
+{% endif %}
+<form action="/newsletter" method="post">{{ csrf() }}{{ field('email','Email address',email|default(''),'email') }}<button class="btn btn-primary" type="submit">Subscribe</button>
+</form>
+</div>
+
+{% elif page == 'blog' %}
+<p class="text-muted">Ideas, updates and stories from the ShopForge team.</p>
+<div class="grid-3">
+{% for post in posts %}
+<article class="card">
+<h2>
+<a href="/blog/{{ post.slug }}">{{ post.title }}</a>
+</h2>
+<p class="product-description">{{ post.body|truncate(180) }}</p>
+<a href="/blog/{{ post.slug }}">Read story →</a>
+</article>
+{% else %}
+<p class="empty">New stories are on their way.</p>
+{% endfor %}
+</div>
+
+{% elif page == 'post' %}
+<article class="card">
+<a href="/blog">← Journal</a>
+<h1>{{ post.title }}</h1>
+<p class="preserve-lines">{{ post.body }}</p>
+</article>
+<section class="section">
+<h2>Conversation</h2>
+<div class="stack">
+{% for comment in comments %}
+<article class="card">
+<strong>{{ comment.username }}</strong>
+<p class="preserve-lines">{{ comment.body }}</p>
+</article>
+{% else %}
+<p class="text-muted">Start the conversation.</p>
+{% endfor %}
+<form class="card" action="/blog/{{ post.slug }}/comments" method="post">{{ csrf() }}{{ area('body','Your comment') }}<button class="btn btn-primary" type="submit">Post comment</button>
+</form>
+</div>
+</section>
+
+{% elif page == 'admin' %}
+<div class="grid-4">
+{% for key,label,path in [('users','Customers','users'),('products','Products','products'),('orders','Orders','orders'),('tickets','Support requests','tickets')] %}
+<a class="card" href="/admin/{{ path }}">
+<div class="stat-value">{{ counts[key] }}</div>
+<div>{{ label }}</div>
+</a>
+{% endfor %}
+</div>
+<section class="section card">
+<h2>Store operations</h2>
+<p class="text-muted">Manage your catalogue, customer accounts, orders and support requests.</p>
+<a href="/admin/posts">Manage journal stories →</a>
+</section>
+
+{% elif page == 'admin_users' %}
+<details class="card mb-4">
+<summary>Create customer account</summary>
+<form action="/admin/users/create" method="post">{{ csrf() }}<div class="grid-2">{{ field('username','Username') }}{{ field('email','Email address','','email') }}{{ field('password','Password','','password') }}{{ role_select() }}</div>
+<button class="btn btn-primary" type="submit">Create account</button>
+</form>
+</details>
+<div class="stack">
+{% for user in users %}
+<details class="card">
+<summary>#{{ user.id }} · {{ user.username }} <span class="badge">{{ user.role|title }}</span>
+</summary>
+<form action="/admin/users/{{ user.id }}/update" method="post">{{ csrf() }}<div class="grid-2">{{ field('email','Email address',user.email,'email') }}{{ field('phone','Phone number',user.phone,'tel',false) }}{{ role_select(user.role) }}{{ field('password','New password (leave blank to keep)','','password',false) }}</div>{{ area('address','Delivery address',user.address,false) }}<button class="btn btn-primary" type="submit">Save account</button>
+</form>
+<form class="mt-4" action="/admin/users/{{ user.id }}/delete" method="post">{{ csrf() }}<button class="btn btn-danger" type="submit">Delete account</button>
+</form>
+</details>
+{% else %}
+<p class="empty">No customer accounts.</p>
+{% endfor %}
+</div>
+
+{% elif page == 'admin_products' %}
+<details class="card mb-4">
+<summary>Add a product</summary>
+<form action="/admin/products/create" method="post">{{ csrf() }}{{ product_fields() }}<button class="btn btn-primary" type="submit">Create product</button>
+</form>
+</details>
+<div class="stack">
+{% for product in catalog %}
+<details class="card">
+<summary>#{{ product.id }} · {{ product.name }} · ${{ product.price }} · {{ product.stock }} in stock</summary>
+<form action="/admin/products/{{ product.id }}/update" method="post">{{ csrf() }}{{ product_fields(product) }}<button class="btn btn-primary" type="submit">Save product</button> <a class="btn btn-outline" href="/product/{{ product.id }}">View product</a>
+</form>
+<form class="mt-4" action="/admin/products/{{ product.id }}/delete" method="post">{{ csrf() }}<button class="btn btn-danger" type="submit">Delete product</button>
+</form>
+</details>
+{% else %}
+<p class="empty">No products.</p>
+{% endfor %}
+</div>
+
+{% elif page == 'admin_tickets' %}
+<div class="stack">
+{% for ticket in tickets %}
+<article class="card">
+<span class="badge">{{ ticket.status|title }}</span>
+<h2>#{{ ticket.id }} · {{ ticket.subject }}</h2>
+{% if ticket.username is defined %}
+<p class="text-muted">{{ ticket.username }}</p>
+{% endif %}
+<p class="preserve-lines">{{ ticket.body }}</p>
+<form action="/admin/tickets/{{ ticket.id }}/update" method="post">{{ csrf() }}{{ area('reply','Reply',ticket.reply,false) }}<div class="form-group">
+<label>Status<select name="status">
+{% for status in ['open','closed'] %}
+<option value="{{ status }}" {% if ticket.status == status %}selected{% endif %}>{{ status|title }}</option>
+{% endfor %}
+</select>
+</label>
+</div>
+<button class="btn btn-primary" type="submit">Save response</button>
+</form>
+</article>
+{% else %}
+<p class="empty">No support requests.</p>
+{% endfor %}
+</div>
+
+{% elif page == 'admin_posts' %}
+<details class="card mb-4">
+<summary>Write a story</summary>
+<form action="/admin/posts/create" method="post">{{ csrf() }}{{ field('slug','URL slug') }}{{ field('title','Title') }}{{ area('body','Story') }}<button class="btn btn-primary" type="submit">Publish story</button>
+</form>
+</details>
+<div class="stack">
+{% for post in posts %}
+<details class="card">
+<summary>{{ post.title }}</summary>
+<form action="/admin/posts/{{ post.id }}/update" method="post">{{ csrf() }}{{ field('title','Title',post.title) }}{{ area('body','Story',post.body) }}<button class="btn btn-primary" type="submit">Save story</button> <a class="btn btn-outline" href="/blog/{{ post.slug }}">Read story</a>
+</form>
+<form class="mt-4" action="/admin/posts/{{ post.id }}/delete" method="post">{{ csrf() }}<button class="btn btn-danger" type="submit">Delete story</button>
+</form>
+</details>
+{% else %}
+<p class="empty">No journal stories.</p>
+{% endfor %}
+</div>
+
+{% elif page == 'api_docs' %}
+<section class="card">
+<h2>Store API</h2>
+<p>Access catalogue and account information with our JSON API. Sign in to your account before requesting personal information.</p>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Resource</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td>
+<a href="/store-api/products">/store-api/products</a>
+</td>
+<td>Browse the product catalogue.</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>
+<a href="/store-api/me">/store-api/me</a>
+</td>
+<td>View your account information.</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>
+<a href="/store-api/orders">/store-api/orders</a>
+</td>
+<td>View your orders.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+
+{% elif page == 'about' %}
+<section class="card">
+<h2>Technology that fits your life</h2>
+<p>ShopForge brings together electronics, software and accessories for the way you work and live. We believe finding the right tools should be straightforward.</p>
+<p>Explore our collection, save your favourites and manage your orders from your account. Our customer care team is here whenever you need a hand.</p>
+<a class="btn btn-primary" href="/products">Explore products</a> <a class="btn btn-outline" href="/support">Contact us</a>
+</section>
+
+{% elif page == 'download' %}
+<section class="card">
+<p>Explore our latest product catalogue online.</p>
+<a class="btn btn-primary" href="/products">View catalogue</a>
+</section>
+
+{% elif page == 'redirect' %}
+<section class="card">
+<p>Return to our store to continue browsing.</p>
+<a class="btn btn-primary" href="/products">Continue shopping</a>
+</section>
+
+{% elif page == 'error' %}
+<p>Please review your request and try again.</p>
+<a class="btn btn-outline" href="/">Return home</a>
+{% endif %}
+</main>
+{% endblock %}

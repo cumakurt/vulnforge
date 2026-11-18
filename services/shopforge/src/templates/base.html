@@ -3,222 +3,111 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{% block title %}ShopForge — Online Store{% endblock %}</title>
-<meta name="description" content="ShopForge — tech, electronics and software marketplace.">
+<title>
+{% block title %}ShopForge — Technology for everyday life{% endblock %}
+</title>
+<meta name="description" content="ShopForge: thoughtful technology, electronics, software and accessories for everyday life.">
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#f4f5f7;--white:#fff;--surface:#fff;
-  --brand:#2563eb;--brand-dark:#1d4ed8;--brand-light:#eff6ff;
-  --text:#111827;--muted:#6b7280;--border:#d1d5db;
-  --red:#dc2626;--green:#16a34a;--yellow:#d97706;
-  --radius:6px;--shadow:0 1px 2px rgba(0,0,0,.07);
-  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-}
-body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.6}
-a{color:var(--brand);text-decoration:none}
-a:hover{text-decoration:underline}
-input,select,textarea,button{font:inherit}
-
-.container{max-width:1180px;margin:0 auto;padding:0 20px}
-.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 16px;border-radius:var(--radius);border:1px solid transparent;cursor:pointer;font-size:13px;font-weight:500;transition:background .12s,opacity .12s;line-height:1.4}
-.btn:hover{opacity:.9}
-.btn-primary{background:var(--brand);color:#fff;border-color:var(--brand)}
-.btn-outline{background:transparent;color:var(--brand);border-color:var(--brand)}
-.btn-sm{padding:5px 10px;font-size:12px}
-.btn-danger{background:var(--red);color:#fff;border-color:var(--red)}
-.btn-muted{background:var(--white);color:var(--text);border-color:var(--border)}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-.mt-4{margin-top:16px}.mt-6{margin-top:24px}.mt-8{margin-top:32px}
-.mb-4{margin-bottom:16px}.mb-6{margin-bottom:24px}
-.text-muted{color:var(--muted)}.text-sm{font-size:12px}
-.font-bold{font-weight:700}.font-semibold{font-weight:600}
-.badge{display:inline-block;padding:2px 7px;border-radius:3px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
-.badge-new{background:#dbeafe;color:#1e40af}
-.badge-sale{background:#fee2e2;color:#991b1b}
-.form-group{margin-bottom:14px}
-.form-group label{display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:#374151;text-transform:uppercase;letter-spacing:.04em}
-.form-group input,.form-group select,.form-group textarea{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;outline:none;background:var(--white)}
-.form-group input:focus,.form-group select:focus{border-color:var(--brand)}
-.form-hint{font-size:11px;color:var(--muted);margin-top:3px}
-.alert{padding:10px 14px;border-radius:var(--radius);font-size:13px;margin-bottom:14px}
-.alert-info{background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe}
-.alert-warn{background:#fffbeb;color:#92400e;border:1px solid #fde68a}
-.breadcrumb{display:flex;gap:5px;align-items:center;font-size:12px;color:var(--muted);margin-bottom:18px}
-.breadcrumb a{color:var(--muted)}
-.breadcrumb span::before{content:"/";margin-right:5px}
-section{margin-bottom:40px}
-
-/* ── Top bar ── */
-.topbar{background:#1e3a8a;color:#bfdbfe;font-size:12px;padding:5px 0;border-bottom:1px solid #1d4ed8}
-.topbar .container{display:flex;justify-content:space-between}
-.topbar a{color:#93c5fd}
-
-/* ── Header ── */
-header.site-header{background:var(--white);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;box-shadow:0 1px 3px rgba(0,0,0,.06)}
-.header-inner{display:flex;align-items:center;gap:20px;padding:12px 20px;max-width:1180px;margin:0 auto}
-.logo{font-size:20px;font-weight:800;color:var(--brand);letter-spacing:-.5px}
-.logo span{color:#1d4ed8}
-.search-bar{flex:1;max-width:460px}
-.search-bar form{display:flex;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--white)}
-.search-bar input{flex:1;padding:8px 12px;border:none;outline:none;font-size:13px}
-.search-bar button{background:var(--brand);color:#fff;border:none;padding:8px 14px;cursor:pointer;font-size:13px;white-space:nowrap}
-.header-actions{display:flex;align-items:center;gap:14px;margin-left:auto;font-size:13px}
-.header-actions a{color:var(--text);font-weight:500}
-.header-actions a:hover{color:var(--brand);text-decoration:none}
-.cart-badge{background:var(--red);color:#fff;border-radius:3px;padding:0 5px;font-size:10px;font-weight:700}
-
-/* ── Nav ── */
-nav.main-nav{background:var(--white);border-bottom:1px solid var(--border)}
-.main-nav .container{display:flex;overflow-x:auto}
-.main-nav a{display:block;padding:9px 14px;font-size:13px;font-weight:500;color:var(--muted);white-space:nowrap;border-bottom:2px solid transparent}
-.main-nav a:hover,.main-nav a.active{color:var(--brand);border-bottom-color:var(--brand);text-decoration:none}
-
-/* ── Hero ── */
-.hero{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:52px 0}
-.hero h1{font-size:34px;font-weight:800;margin-bottom:10px;letter-spacing:-.5px}
-.hero p{font-size:16px;opacity:.88;margin-bottom:24px}
-.hero-search{display:flex;max-width:500px;border-radius:var(--radius);overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.2)}
-.hero-search input{flex:1;padding:12px 16px;border:none;outline:none;font-size:14px;color:var(--text)}
-.hero-search button{background:#1d4ed8;color:#fff;border:none;padding:12px 20px;cursor:pointer;font-size:14px;font-weight:600;white-space:nowrap}
-
-/* ── Category strip ── */
-.cat-strip{display:flex;gap:8px;overflow-x:auto;padding:2px 0}
-.cat-pill{flex-shrink:0;background:var(--white);border:1px solid var(--border);border-radius:3px;padding:5px 14px;font-size:12px;font-weight:500;cursor:pointer;color:var(--text);text-decoration:none}
-.cat-pill:hover,.cat-pill.active{background:var(--brand);color:#fff;border-color:var(--brand);text-decoration:none}
-
-/* ── Product card ── */
-.product-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;transition:box-shadow .15s}
-.product-card:hover{box-shadow:0 3px 10px rgba(0,0,0,.1)}
-.product-thumb{background:#f8fafc;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;border-bottom:1px solid var(--border)}
-.product-body{padding:12px;flex:1;display:flex;flex-direction:column;gap:4px}
-.product-name{font-weight:600;font-size:13px;line-height:1.4}
-.product-price{font-size:17px;font-weight:700;color:var(--brand)}
-.product-old-price{font-size:11px;color:var(--muted);text-decoration:line-through}
-.product-actions{margin-top:auto;padding-top:8px;display:flex;gap:6px}
-
-/* ── Footer ── */
-footer.site-footer{background:#111827;color:#9ca3af;padding:40px 0 20px;margin-top:56px}
-.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:32px;margin-bottom:32px}
-.footer-brand .logo{color:#60a5fa;font-size:18px}
-.footer-brand p{font-size:12px;margin-top:8px;line-height:1.6}
-.footer-col h4{font-size:11px;font-weight:700;color:#f9fafb;margin-bottom:10px;text-transform:uppercase;letter-spacing:.08em}
-.footer-col ul{list-style:none;display:flex;flex-direction:column;gap:6px}
-.footer-col ul li a{color:#9ca3af;font-size:12px}
-.footer-col ul li a:hover{color:#f9fafb}
-.footer-bottom{border-top:1px solid #374151;padding-top:16px;display:flex;justify-content:space-between;font-size:11px}
-
-@media(max-width:768px){
-  .grid-4{grid-template-columns:repeat(2,1fr)}
-  .grid-3{grid-template-columns:repeat(2,1fr)}
-  .grid-2{grid-template-columns:1fr}
-  .footer-grid{grid-template-columns:1fr 1fr}
-  .hero h1{font-size:24px}
-}
+*{box-sizing:border-box}body{margin:0;background:#f4f5f7;color:#172033;font:14px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}a{color:#245ad0;text-decoration:none}a:hover{text-decoration:underline}input,select,textarea,button{font:inherit}.container{max-width:1180px;margin:auto;padding:0 22px}.topbar{background:#18376b;color:#d7e5ff;padding:6px 0;font-size:12px}.topbar .container{display:flex;justify-content:space-between;gap:16px}.topbar a{color:#fff}.site-header{background:#fff;border-bottom:1px solid #dde2eb}.header-inner{display:flex;align-items:center;gap:24px;padding:20px 0}.logo{font-size:25px;font-weight:800;letter-spacing:-1px;color:#18376b}.logo span{color:#245ad0}.search-bar{flex:1;max-width:480px}.search-bar form{display:flex}.search-bar input{width:100%;min-width:0;border:1px solid #cbd4e2;border-radius:5px 0 0 5px;padding:9px 12px}.search-bar button{border-radius:0 5px 5px 0}.header-actions{display:flex;align-items:center;gap:16px;margin-left:auto}.main-nav{display:flex;gap:24px;flex-wrap:wrap;padding:10px 0}.main-nav a{font-weight:600;color:#43516b}.inline-form{display:inline;margin:0}.link-button{border:0;background:none;color:inherit;padding:0;cursor:pointer}.cart-badge{background:#e8efff;padding:1px 6px;border-radius:20px;font-size:12px}.page{padding-top:32px;padding-bottom:48px}.card{background:#fff;border:1px solid #dde2eb;border-radius:8px;padding:22px;box-shadow:0 2px 4px #17203305}.grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}.grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}.grid-4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}.stack>*+*{margin-top:18px}.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.btn{display:inline-flex;justify-content:center;align-items:center;padding:8px 15px;border:1px solid transparent;border-radius:5px;font-weight:600;font-size:13px;cursor:pointer;line-height:1.4}.btn:hover{text-decoration:none;opacity:.9}.btn-primary{background:#245ad0;color:white;border-color:#245ad0}.btn-outline{background:#fff;color:#245ad0;border-color:#b9c9e9}.btn-danger{background:#fff1f1;color:#b32323;border-color:#f1caca}.btn-sm{padding:5px 10px;font-size:12px}.btn:disabled{opacity:.5;cursor:not-allowed}.form-group{margin-bottom:15px}.form-group label{display:block;font-weight:600;font-size:12px;margin-bottom:5px}.form-group input,.form-group textarea,.form-group select{display:block;width:100%;padding:9px 11px;border:1px solid #cbd4e2;border-radius:5px;background:white}.form-group input:focus,.form-group textarea:focus,.form-group select:focus{outline:2px solid #adc5fb;outline-offset:1px}.form-hint,.text-muted{color:#68748a}.text-sm{font-size:12px}.alert{padding:12px 16px;border:1px solid #bfd5f7;border-radius:5px;background:#edf4ff;margin:18px 0}.alert-error{background:#fff0f0;border-color:#f1baba;color:#9d2525}.alert-success{background:#eaf8ef;border-color:#b6dec4;color:#226b3d}.hero{background:linear-gradient(120deg,#18376b,#2860cf);color:#fff;padding:64px 0}.hero h1{font-size:42px;line-height:1.15;max-width:620px;margin:0 0 18px}.hero p{max-width:540px;color:#dce9ff;font-size:17px}.hero .btn{margin-top:10px;background:#fff;color:#18376b}.section{margin:36px 0}.section-heading{display:flex;align-items:center;justify-content:space-between;gap:20px}.product-card{display:flex;flex-direction:column;gap:9px}.product-card h2,.product-card h3{font-size:16px;margin:0}.product-thumb{height:120px;background:#f2f5fc;border-radius:5px;display:flex;align-items:center;justify-content:center;color:#6b7e9e;font-size:12px;text-transform:uppercase;letter-spacing:.08em}.product-price{font-size:22px;font-weight:750;color:#18376b}.product-card .actions{margin-top:auto}.product-description{color:#68748a;font-size:13px;white-space:pre-wrap}.badge{display:inline-block;padding:2px 8px;border-radius:20px;background:#e8efff;color:#244c91;font-size:12px}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:11px;text-align:left;border-bottom:1px solid #e5e9f0;vertical-align:top}th{font-size:12px;color:#68748a}h1{font-size:28px;line-height:1.25}h2{font-size:20px}h3{font-size:16px}.narrow{max-width:500px;margin:0 auto}.preserve-lines{white-space:pre-wrap;overflow-wrap:anywhere}.empty{padding:28px 0;color:#68748a}.admin-nav{display:flex;gap:12px;flex-wrap:wrap;margin:18px 0 28px;padding-bottom:16px;border-bottom:1px solid #dce2eb}details summary{cursor:pointer;font-weight:600;padding:4px 0 14px}.stat-value{font-size:32px;font-weight:750;color:#18376b}.site-footer{background:#17263f;color:#bfcce0;margin-top:32px;padding:38px 0 24px}.site-footer a{color:#dfeaff}.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:32px}.footer-bottom{margin-top:28px;padding-top:16px;border-top:1px solid #31425d;font-size:12px}.site-footer h3{color:#fff}.site-footer ul{list-style:none;padding:0}.site-footer li{margin:7px 0}.mb-4{margin-bottom:16px}.mt-4{margin-top:16px}@media(max-width:800px){.grid-4,.grid-3{grid-template-columns:repeat(2,minmax(0,1fr))}.header-inner{flex-wrap:wrap;gap:14px}.search-bar{order:3;max-width:none;flex-basis:100%}.hero h1{font-size:32px}.main-nav{gap:16px}}@media(max-width:520px){.grid-4,.grid-3,.grid-2,.footer-grid{grid-template-columns:1fr}.header-actions{gap:10px;font-size:12px}.topbar .container{display:block}.container{padding:0 16px}.hero{padding:42px 0}.card{padding:18px}}
 </style>
 {% block head %}{% endblock %}
 </head>
 <body>
-
 <div class="topbar">
-  <div class="container">
-    <span>Free shipping on orders over $50 &mdash; <a href="/support">Help Center</a></span>
-    <span>
-      <a href="/login">Sign in</a> &nbsp;&middot;&nbsp;
-      <a href="/register">Register</a> &nbsp;&middot;&nbsp;
-      <a href="/legacy/">Legacy Store</a> &nbsp;&middot;&nbsp;
-      <a href="/spa/">Mobile App</a>
-    </span>
-  </div>
+<div class="container">
+<span>Technology for everyday life</span>
+<span>
+{% if current_user %}Hello, {{ current_user.username }} &nbsp; <form class="inline-form" action="/logout" method="post">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<button class="link-button" type="submit">Sign out</button>
+</form>
+{% else %}
+<a href="/login">Sign in</a> &nbsp; · &nbsp; <a href="/register">Create an account</a>
+{% endif %}
+</span>
 </div>
-
+</div>
 <header class="site-header">
-  <div class="header-inner">
-    <a href="/" class="logo">Shop<span>Forge</span></a>
-    <div class="search-bar">
-      <form action="/search" method="GET" role="search">
-        <input type="text" name="q" placeholder="Search products, brands, categories&hellip;" autocomplete="off">
-        <button type="submit">Search</button>
-      </form>
-    </div>
-    <div class="header-actions">
-      <a href="/wishlist">Wishlist</a>
-      <a href="/profile">Account</a>
-      <a href="/cart">Cart <span class="cart-badge">3</span></a>
-    </div>
-  </div>
-</header>
-
-<nav class="main-nav">
-  <div class="container">
-    <a href="/" class="{% block nav_home %}{% endblock %}">Home</a>
-    <a href="/products">All Products</a>
-    <a href="/products?category=electronics">Electronics</a>
-    <a href="/products?category=software">Software</a>
-    <a href="/products?category=accessories">Accessories</a>
-    <a href="/blog">Blog</a>
-    <a href="/support">Support</a>
-    <a href="/api-docs">API</a>
-    <a href="/admin" style="color:var(--red)">Admin</a>
-  </div>
+<div class="container">
+<div class="header-inner">
+<a class="logo" href="/">Shop<span>Forge</span>
+</a>
+<div class="search-bar">
+<form action="/search" method="get" role="search">
+<input type="search" name="q" aria-label="Search products" placeholder="Search products, categories…">
+<button class="btn btn-primary" type="submit">Search</button>
+</form>
+</div>
+<div class="header-actions">
+<a href="/wishlist">Wishlist</a>
+<a href="/profile">Account</a>
+<a href="/cart">Cart <span class="cart-badge">{{ cart_count|default(0) }}</span>
+</a>
+</div>
+</div>
+<nav class="main-nav" aria-label="Main navigation">
+<a href="/">Home</a>
+<a href="/products">All products</a>
+<a href="/products?category=electronics">Electronics</a>
+<a href="/products?category=software">Software</a>
+<a href="/blog">Journal</a>
+<a href="/support">Support</a>
+{% if current_user and current_user.role == 'admin' %}
+<a href="/admin">Administration</a>
+{% endif %}
 </nav>
-
+</div>
+</header>
+{% if error or message %}
+<div class="container">
+{% if error %}
+<div class="alert alert-error" role="alert">{{ error }}</div>
+{% endif %}{% if message %}
+<div class="alert alert-success" role="status">{{ message }}</div>
+{% endif %}
+</div>
+{% endif %}
 {% block content %}{% endblock %}
-
 <footer class="site-footer">
-  <div class="container">
-    <div class="footer-grid">
-      <div class="footer-brand">
-        <div class="logo">Shop<span style="color:#93c5fd">Forge</span></div>
-        <p>Your trusted marketplace for tech, electronics and software. Powered by modern APIs and microservices.</p>
-        <!-- backup: /config.php.bak | legacy admin: /legacy/admin/login.php -->
-      </div>
-      <div class="footer-col">
-        <h4>Shop</h4>
-        <ul>
-          <li><a href="/products">All Products</a></li>
-          <li><a href="/products?category=electronics">Electronics</a></li>
-          <li><a href="/products?category=software">Software</a></li>
-          <li><a href="/products?category=accessories">Accessories</a></li>
-          <li><a href="/php/sqli/products.php?id=1 UNION SELECT 1,2,3,version(),5,6--">New Arrivals</a></li>
-        </ul>
-      </div>
-      <div class="footer-col">
-        <h4>Account</h4>
-        <ul>
-          <li><a href="/login">Sign In</a></li>
-          <li><a href="/register">Register</a></li>
-          <li><a href="/profile">My Profile</a></li>
-          <li><a href="/orders">My Orders</a></li>
-          <li><a href="/php/auth/login.php">Legacy Login</a></li>
-        </ul>
-      </div>
-      <div class="footer-col">
-        <h4>Help</h4>
-        <ul>
-          <li><a href="/support">Support Center</a></li>
-          <li><a href="/download?file=catalogue.pdf">Download Catalogue</a></li>
-          <li><a href="/api-docs">Developer API</a></li>
-          <li><a href="/about">About Us</a></li>
-          <li><a href="/scan-fixtures">Passive scanner fixtures</a></li>
-          <li><a href="/redirect?next=https://evil.example/">Partner Portal</a></li>
-        </ul>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <span>&copy; 2024 ShopForge Inc. All rights reserved.</span>
-      <span>
-        <a href="/php/config/phpinfo.php">System Info</a> &middot;
-        <a href="/legacy/.git/config">Version</a> &middot;
-        <a href="/legacy/backup/">Backups</a>
-      </span>
-    </div>
-  </div>
+<div class="container">
+<div class="footer-grid">
+<div>
+<h3>ShopForge</h3>
+<p>Thoughtfully selected technology for work, home and everything in between.</p>
+<a href="/newsletter">Get product news and updates</a>
+</div>
+<div>
+<h3>Your account</h3>
+<ul>
+<li>
+<a href="/profile">Profile settings</a>
+</li>
+<li>
+<a href="/orders">Order history</a>
+</li>
+<li>
+<a href="/wishlist">Wishlist</a>
+</li>
+</ul>
+</div>
+<div>
+<h3>Customer care</h3>
+<ul>
+<li>
+<a href="/support">Contact support</a>
+</li>
+<li>
+<a href="/about">About ShopForge</a>
+</li>
+<li>
+<a href="/api-docs">Developer resources</a>
+</li>
+</ul>
+</div>
+</div>
+<div class="footer-bottom">© ShopForge. All rights reserved.</div>
+</div>
 </footer>
-
 {% block scripts %}{% endblock %}
 </body>
 </html>
