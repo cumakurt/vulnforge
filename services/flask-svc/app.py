@@ -382,6 +382,9 @@ def validate_safe():
 @app.post("/__lab/internal/reset")
 def lab_reset():
     random.seed(1337)
+    # Also clear auth state
+    _auth_codes.clear()
+    _access_tokens.clear()
     return {"reset": True}
 
 
@@ -389,6 +392,402 @@ def lab_reset():
 def lab_seed():
     random.seed(1337)
     return {"seeded": True, "profile": request.args.get("profile", "small")}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# AUTH-SVC ROUTES (merged from auth-svc — OAUTH-001..007)
+# Previously: separate Python stdlib server on port 8080
+# Now: Flask blueprint at /auth/*
+# ═══════════════════════════════════════════════════════════════════════════════
+
+import secrets as _secrets
+
+_USERS = {"alice": "password1", "bob": "qwerty", "admin": "admin123"}
+_ALLOWED_REDIRECTS = {
+    "http://127.0.0.1:8000/auth/callback",
+    "http://localhost:8000/auth/callback",
+}
+_auth_codes: dict = {}
+_access_tokens: dict = {}
+
+
+def _auth_trigger(vuln_id: str, extra: dict | None = None) -> None:
+    payload = json.dumps({
+        "kind": "vuln_triggered",
+        "vuln_id": vuln_id,
+        "service": "auth-svc",
+        "request_id": request.headers.get("X-Request-Id", ""),
+        "ts": time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime()),
+        **(extra or {}),
+    }).encode()
+    req = urllib.request.Request(
+        f"{LAB_CONTROL_URL}/__lab/events",
+        data=payload,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        urllib.request.urlopen(req, timeout=1).close()
+    except Exception:
+        pass
+
+
+@app.get("/health")
+def _health_check():
+    return {"status": "ok", "service": "flask-svc"}
+
+
+@app.get("/auth/health")
+def auth_health():
+    return {"status": "ok", "service": "auth-svc"}
+
+
+@app.get("/auth/.well-known/openid-configuration")
+def auth_oidc_config():
+    return {
+        "issuer": "http://127.0.0.1:8000/auth",
+        "authorization_endpoint": "/auth/authorize",
+        "token_endpoint": "/auth/token",
+        "response_types_supported": ["code", "token"],
+        "scopes_supported": ["read", "write", "admin"],
+    }
+
+
+# @vuln id=OAUTH-001 name="OAuth redirect_uri is not validated" cwe=CWE-601 owasp=A01:2021 type=open-redirect-uri level=1 param=redirect_uri method=GET service=auth-svc url=/auth/authorize param_loc=query needs_oob=false auth=false detection=active tags=oauth,redirect,authorization proof_kind=marker proof_desc="Authorization code is delivered to an attacker-controlled redirect_uri"
+# @vuln id=OAUTH-002 name="OAuth authorization request does not require state" cwe=CWE-352 owasp=A01:2021 type=missing-state level=2 param=state method=GET service=auth-svc url=/auth/authorize param_loc=query needs_oob=false auth=false detection=active tags=oauth,csrf,state proof_kind=marker proof_desc="Authorization succeeds without a state parameter, enabling login CSRF"
+@app.get("/auth/authorize")
+def auth_authorize():
+    redirect_uri = request.args.get("redirect_uri", "")
+    code = _secrets.token_hex(8)
+    _auth_codes[code] = {"user": "alice", "scope": request.args.get("scope", "read")}
+    target = f"{redirect_uri}?code={code}"
+    if request.args.get("state"):
+        target += f"&state={request.args['state']}"
+    _auth_trigger("OAUTH-001", {"redirect_uri": redirect_uri})
+    if redirect_uri.startswith(("http://", "https://")) and redirect_uri not in _ALLOWED_REDIRECTS:
+        _auth_trigger("OAUTH-002", {"state_provided": bool(request.args.get("state"))})
+    return redirect(target, code=302)
+
+
+@app.get("/auth/authorize_safe")
+def auth_authorize_safe():
+    redirect_uri = request.args.get("redirect_uri", "")
+    if redirect_uri not in _ALLOWED_REDIRECTS:
+        return {"error": "invalid redirect_uri"}, 400
+    if not request.args.get("state"):
+        return {"error": "state is required"}, 400
+    code = _secrets.token_hex(8)
+    _auth_codes[code] = {"user": "alice", "scope": "read"}
+    return redirect(f"{redirect_uri}?code={code}&state={request.args['state']}", code=302)
+
+
+# @vuln id=OAUTH-003 name="Implicit flow returns the access token in the fragment" cwe=CWE-598 owasp=A07:2021 type=implicit-flow level=2 param=redirect_uri method=GET service=auth-svc url=/auth/implicit param_loc=query needs_oob=false auth=false detection=active tags=oauth,implicit,token-leak proof_kind=marker proof_desc="Location header contains #access_token=..."
+@app.get("/auth/implicit")
+def auth_implicit():
+    redirect_uri = request.args.get("redirect_uri", "")
+    token = _secrets.token_hex(16)
+    _access_tokens[token] = {"user": "alice", "scope": "read"}
+    _auth_trigger("OAUTH-003", {"redirect_uri": redirect_uri})
+    return redirect(f"{redirect_uri}#access_token={token}&token_type=bearer", code=302)
+
+
+@app.get("/auth/implicit_safe")
+def auth_implicit_safe():
+    return {"error": "implicit flow is disabled, use authorization code with PKCE"}, 400
+
+
+# @vuln id=OAUTH-005 name="Scope escalation accepted without consent" cwe=CWE-269 owasp=A01:2021 type=scope-escalation level=2 param=scope method=GET service=auth-svc url=/auth/scope param_loc=query needs_oob=false auth=true detection=active tags=oauth,scope,privilege-escalation proof_kind=marker proof_desc="Requesting admin scope returns an admin token for a normal user"
+@app.get("/auth/scope")
+def auth_scope():
+    scope = request.args.get("scope", "read")
+    token = _secrets.token_hex(16)
+    _access_tokens[token] = {"user": "alice", "scope": scope}
+    _auth_trigger("OAUTH-005", {"scope": scope})
+    from flask import Response as _FlaskResp
+    return _FlaskResp(
+        json.dumps({"access_token": token, "scope": scope, "role": "admin" if "admin" in scope else "user"}, separators=(', ', ': ')),
+        mimetype="application/json"
+    )
+
+
+@app.get("/auth/scope_safe")
+def auth_scope_safe():
+    token = _secrets.token_hex(16)
+    _access_tokens[token] = {"user": "alice", "scope": "read"}
+    return {"access_token": token, "scope": "read", "role": "user"}
+
+
+# @vuln id=OAUTH-004 name="Token endpoint does not require PKCE" cwe=CWE-287 owasp=A07:2021 type=missing-pkce level=2 param=code method=POST service=auth-svc url=/auth/token param_loc=body needs_oob=false auth=false detection=active tags=oauth,pkce,authorization proof_kind=marker proof_desc="An authorization code is exchanged without any code_verifier"
+@app.post("/auth/token")
+def auth_token():
+    code = request.form.get("code", "")
+    token = _secrets.token_hex(16)
+    _access_tokens[token] = {"user": "alice", "scope": "read"}
+    _auth_trigger("OAUTH-004", {"code": code, "pkce": bool(request.form.get("code_verifier"))})
+    return {"access_token": token, "token_type": "bearer", "expires_in": 3600}
+
+
+@app.post("/auth/token_safe")
+def auth_token_safe():
+    if not request.form.get("code_verifier"):
+        return {"error": "code_verifier is required (PKCE)"}, 400
+    token = _secrets.token_hex(16)
+    return {"access_token": token, "token_type": "bearer"}
+
+
+# @vuln id=OAUTH-006 name="SAML assertion accepted without signature validation" cwe=CWE-347 owasp=A07:2021 type=saml-unsigned level=2 param=SAMLResponse method=POST service=auth-svc url=/auth/saml/acs param_loc=body needs_oob=false auth=false detection=active tags=saml,auth,signature proof_kind=marker proof_desc="An unsigned assertion is accepted and grants the admin role"
+import base64 as _b64
+
+@app.post("/auth/saml/acs")
+def auth_saml_acs():
+    raw = request.form.get("SAMLResponse", "")
+    try:
+        xml = _b64.b64decode(raw).decode("utf-8", errors="replace")
+    except Exception:
+        xml = ""
+    if "<saml" not in xml.lower():
+        return {"error": "invalid SAMLResponse"}, 400
+    _auth_trigger("OAUTH-006", {"signed": "SignatureValue" in xml})
+    from flask import Response as _FlaskResp2
+    return _FlaskResp2(
+        json.dumps({"authenticated": True, "user": "admin", "role": "admin", "signature_verified": False}, separators=(', ', ': ')),
+        mimetype="application/json"
+    )
+
+
+@app.post("/auth/saml/acs_safe")
+def auth_saml_acs_safe():
+    raw = request.form.get("SAMLResponse", "")
+    try:
+        xml = _b64.b64decode(raw).decode("utf-8", errors="replace")
+    except Exception:
+        xml = ""
+    if "SignatureValue" not in xml:
+        return {"error": "assertion is not signed"}, 400
+    return {"authenticated": True, "signature_verified": True}
+
+
+# @vuln id=OAUTH-007 name="Username enumeration in the login endpoint" cwe=CWE-204 owasp=A07:2021 type=user-enumeration level=1 param=username method=POST service=auth-svc url=/auth/login param_loc=body needs_oob=false auth=false detection=passive tags=auth,enumeration,info-leak proof_kind=marker proof_desc="Unknown users and wrong passwords produce different messages"
+@app.post("/auth/login")
+def auth_login():
+    username = request.form.get("username", "")
+    password = request.form.get("password", "")
+    if username not in _USERS:
+        _auth_trigger("OAUTH-007", {"username": username, "exists": False})
+        return {"error": "unknown user"}, 401
+    if _USERS[username] != password:
+        return {"error": "wrong password"}, 401
+    return {"authenticated": True, "token": _secrets.token_hex(16)}
+
+
+@app.post("/auth/login_safe")
+def auth_login_safe():
+    username = request.form.get("username", "")
+    password = request.form.get("password", "")
+    if _USERS.get(username) == password:
+        return {"authenticated": True, "token": _secrets.token_hex(16)}
+    return {"authenticated": False, "error": "invalid credentials"}, 401
+
+
+@app.get("/__lab/internal/reset_auth")
+def auth_lab_reset():
+    _auth_codes.clear()
+    _access_tokens.clear()
+    return {"reset": True}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# LEGACY-SVC ROUTES (merged from legacy-svc — LEG-001..007)
+# Previously: separate Python stdlib server on port 8888 simulating Apache/PHP
+# Now: Flask routes at /legacy/*
+# ═══════════════════════════════════════════════════════════════════════════════
+
+_LEGACY_BANNER = "Apache/2.2.15 (CentOS)"
+
+_LEGACY_INDEX = """<!doctype html>
+<html>
+<head><title>Legacy Shop</title></head>
+<body>
+<h1>Legacy Shop</h1>
+<p>Welcome to our store.</p>
+<script src="/legacy/assets/jquery-1.8.3.min.js"></script>
+<script src="/legacy/assets/app.js"></script>
+<!-- admin panel: /legacy/admin/login.php -->
+</body>
+</html>"""
+
+_LEGACY_JQUERY = """/*! jQuery v1.8.3 jquery.com | (c) 2010-2012 John Resig */
+/* Intentionally old jQuery build used for SCA testing. */
+(function(window, undefined) { window.jQuery = function(selector) { return { selector: selector }; }; })(window);"""
+
+_LEGACY_BACKUP = """<!doctype html>
+<html><head><title>Index of /backup</title></head>
+<body><h1>Index of /backup</h1>
+<ul>
+<li><a href="db-2024-01.sql">db-2024-01.sql</a></li>
+<li><a href="site-2024-01.tar.gz">site-2024-01.tar.gz</a></li>
+<li><a href="config.old.php">config.old.php</a></li>
+</ul></body></html>"""
+
+
+def _legacy_trigger(vuln_id: str, extra: dict | None = None) -> None:
+    payload = json.dumps({
+        "kind": "vuln_triggered",
+        "vuln_id": vuln_id,
+        "service": "legacy-svc",
+        "request_id": request.headers.get("X-Request-Id", ""),
+        "ts": time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime()),
+        **(extra or {}),
+    }).encode()
+    req = urllib.request.Request(
+        f"{LAB_CONTROL_URL}/__lab/events",
+        data=payload,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        urllib.request.urlopen(req, timeout=1).close()
+    except Exception:
+        pass
+
+
+def _legacy_response(body: str, status: int = 200, content_type: str = "text/html; charset=utf-8", extra_headers: dict | None = None):
+    from flask import Response as _Resp
+    resp = _Resp(body, status=status, mimetype=content_type)
+    resp.headers["Server"] = _LEGACY_BANNER
+    resp.headers["X-Powered-By"] = "PHP/5.3.3"
+    if extra_headers:
+        for k, v in extra_headers.items():
+            resp.headers[k] = v
+    return resp
+
+
+@app.get("/legacy/health")
+def legacy_health():
+    return {"status": "ok", "service": "legacy-svc"}
+
+
+# @vuln id=LEG-001 name="End-of-life jQuery 1.8.3 shipped to clients" cwe=CWE-1104 owasp=A06:2021 type=outdated-component level=1 param=none method=GET service=legacy-svc url=/legacy/ param_loc=path needs_oob=false auth=false detection=sca tags=sca,outdated,jquery proof_kind=marker proof_desc="The page references jquery-1.8.3.min.js, a version with known XSS CVEs"
+@app.get("/legacy/")
+@app.get("/legacy/index.html")
+@app.get("/legacy/index.php")
+def legacy_index():
+    _legacy_trigger("LEG-001", {})
+    return _legacy_response(_LEGACY_INDEX)
+
+
+@app.get("/legacy/index_safe.html")
+def legacy_index_safe():
+    return _legacy_response("<!doctype html><html><head><title>Legacy Shop (hardened)</title></head><body><h1>Legacy Shop</h1><script src='/legacy/assets/app_safe.js'></script></body></html>")
+
+
+@app.get("/legacy/assets/jquery-1.8.3.min.js")
+def legacy_jquery():
+    return _legacy_response(_LEGACY_JQUERY, content_type="application/javascript")
+
+
+@app.get("/legacy/assets/app.js")
+@app.get("/legacy/assets/app_safe.js")
+def legacy_app_js():
+    return _legacy_response("console.log('legacy app loaded');\n", content_type="application/javascript")
+
+
+# @vuln id=LEG-002 name="Backup configuration file publicly readable" cwe=CWE-538 owasp=A05:2021 type=backup-file level=1 param=none method=GET service=legacy-svc url=/legacy/config.php.bak param_loc=path needs_oob=false auth=false detection=config tags=misconfiguration,info-leak,backup proof_kind=marker proof_desc="config.php.bak contains database credentials"
+@app.get("/legacy/config.php.bak")
+def legacy_config_bak():
+    _legacy_trigger("LEG-002", {})
+    body = "<?php\ndefine('DB_HOST','mysql');\ndefine('DB_USER','legacy_user');\ndefine('DB_PASSWORD','legacy_backup_password');\ndefine('DB_NAME','legacy_shop');\n"
+    return _legacy_response(body, content_type="text/plain")
+
+
+@app.get("/legacy/config_safe.bak")
+def legacy_config_safe():
+    return _legacy_response("not found", status=404, content_type="text/plain")
+
+
+# @vuln id=LEG-003 name="Exposed .git metadata allows source reconstruction" cwe=CWE-527 owasp=A05:2021 type=vcs-exposure level=1 param=none method=GET service=legacy-svc url=/legacy/.git/config param_loc=path needs_oob=false auth=false detection=config tags=misconfiguration,info-leak,git proof_kind=marker proof_desc=".git/config is served with the repository remote and local paths"
+@app.get("/legacy/.git/config")
+def legacy_git_config():
+    _legacy_trigger("LEG-003", {})
+    body = '[core]\n\trepositoryformatversion = 0\n\tfilemode = true\n[remote "origin"]\n\turl = https://git.example.invalid/legacy-shop.git\n'
+    return _legacy_response(body, content_type="text/plain")
+
+
+@app.get("/legacy/git_safe/config")
+def legacy_git_safe():
+    return _legacy_response("not found", status=404, content_type="text/plain")
+
+
+# @vuln id=LEG-004 name="Directory listing exposes database dumps" cwe=CWE-548 owasp=A05:2021 type=directory-listing level=1 param=none method=GET service=legacy-svc url=/legacy/backup/ param_loc=path needs_oob=false auth=false detection=config tags=misconfiguration,info-leak,directory-listing proof_kind=marker proof_desc="Apache style index lists SQL and archive backups"
+@app.get("/legacy/backup/")
+@app.get("/legacy/backup")
+def legacy_backup():
+    _legacy_trigger("LEG-004", {})
+    return _legacy_response(_LEGACY_BACKUP)
+
+
+@app.get("/legacy/backup_safe/")
+@app.get("/legacy/backup_safe")
+def legacy_backup_safe():
+    return _legacy_response("Forbidden", status=403, content_type="text/plain")
+
+
+# @vuln id=LEG-005 name="Default administrative credentials admin/admin" cwe=CWE-1392 owasp=A07:2021 type=default-credentials level=1 param=username method=POST service=legacy-svc url=/legacy/admin/login.php param_loc=body needs_oob=false auth=false detection=active tags=auth,default-credentials proof_kind=marker proof_desc="admin/admin authenticates and returns an administrative session"
+# @vuln id=LEG-006 name="Server banner discloses end-of-life software versions" cwe=CWE-200 owasp=A05:2021 type=banner-disclosure level=1 param=none method=GET service=legacy-svc url=/legacy/banner param_loc=path needs_oob=false auth=false detection=config tags=misconfiguration,info-leak,banner proof_kind=marker proof_desc="Server header reports Apache 2.2.15 and PHP 5.3.3"
+# @vuln id=LEG-007 name="WordPress readme reveals the CMS version" cwe=CWE-200 owasp=A06:2021 type=cms-version-disclosure level=1 param=none method=GET service=legacy-svc url=/legacy/readme.html param_loc=path needs_oob=false auth=false detection=sca tags=sca,info-leak,wordpress proof_kind=marker proof_desc="readme.html states WordPress 4.1, a version with known vulnerabilities"
+
+@app.get("/legacy/admin/login.php")
+def legacy_admin_login_form():
+    return _legacy_response("<form method='post'><input name='username'><input name='password' type='password'><button>Login</button></form>")
+
+
+@app.post("/legacy/admin/login.php")
+def legacy_admin_login():
+    username = request.form.get("username", "")
+    password = request.form.get("password", "")
+    if username == "admin" and password == "admin":
+        import base64 as _b
+        _legacy_trigger("LEG-005", {"username": username})
+        return _legacy_response(
+            json.dumps({"authenticated": True, "role": "admin", "session": _b.b64encode(b"admin:legacy").decode()}),
+            content_type="application/json",
+        )
+    return _legacy_response(json.dumps({"authenticated": False}), status=401, content_type="application/json")
+
+
+@app.post("/legacy/admin/login_safe.php")
+def legacy_admin_login_safe():
+    return _legacy_response(json.dumps({"error": "default credentials disabled"}), status=403, content_type="application/json")
+
+
+@app.get("/legacy/banner")
+def legacy_banner():
+    _legacy_trigger("LEG-006", {})
+    return _legacy_response("Apache/2.2.15 (CentOS) PHP/5.3.3 mod_ssl/2.2.15", content_type="text/plain")
+
+
+@app.get("/legacy/banner_safe")
+def legacy_banner_safe():
+    from flask import Response as _Resp
+    resp = _Resp("web server", mimetype="text/plain")
+    resp.headers["Server"] = "nginx"
+    return resp
+
+
+@app.get("/legacy/readme.html")
+def legacy_readme():
+    _legacy_trigger("LEG-007", {})
+    return _legacy_response("<h1>WordPress</h1><p>Version 4.1</p>")
+
+
+@app.get("/legacy/readme_safe.html")
+def legacy_readme_safe():
+    return _legacy_response("not found", status=404, content_type="text/plain")
+
+
+@app.get("/__lab/internal/reset_legacy")
+def legacy_lab_reset():
+    return {"reset": True}
 
 
 if __name__ == "__main__":

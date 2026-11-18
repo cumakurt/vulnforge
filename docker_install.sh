@@ -102,8 +102,8 @@ while [ $# -gt 0 ]; do
 done
 
 case "$PROFILE" in
-  core|full|api|infra|waf|crawl) ;;
-  *) die "invalid profile '$PROFILE' (core|full|api|infra|waf|crawl)" ;;
+  core|full|api|waf) ;;
+  *) die "invalid profile '$PROFILE' (core|full|api|waf)" ;;
 esac
 
 # ─── OS / package manager detection ─────────────────────────────────────────

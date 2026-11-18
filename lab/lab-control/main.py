@@ -45,12 +45,7 @@ SERVICES: dict[str, str] = {
     "flask-svc":     "http://flask-svc:5000/health",
     "spring-svc":    "http://spring-svc:8080/health",
     "go-svc":        "http://go-svc:8090/health",
-    "graphql-svc":   "http://graphql-svc:4000/health",
-    "crawl-lab":     "http://crawl-lab:3001/health",
-    "legacy-svc":    "http://legacy-svc:8888/health",
-    "auth-svc":      "http://auth-svc:8080/health",
     "oob-collector": "http://oob-collector:9000/health",
-    "internal-metadata": "http://internal-metadata/latest/meta-data/",
 }
 
 # In-memory event log (bounded)
@@ -157,15 +152,11 @@ async def reset():
 
     async with httpx.AsyncClient(timeout=30.0) as client:
         reset_urls = {
-            "php-web":     "http://php-web/__lab/internal/reset.php",
-            "node-api":    "http://node-api:3000/__lab/internal/reset",
-            "flask-svc":   "http://flask-svc:5000/__lab/internal/reset",
-            "spring-svc":  "http://spring-svc:8080/__lab/internal/reset",
-            "go-svc":      "http://go-svc:8090/__lab/internal/reset",
-            "graphql-svc": "http://graphql-svc:4000/__lab/internal/reset",
-            "crawl-lab":   "http://crawl-lab:3001/__lab/internal/reset",
-            "legacy-svc":  "http://legacy-svc:8888/__lab/internal/reset",
-            "auth-svc":    "http://auth-svc:8080/__lab/internal/reset",
+            "php-web":    "http://php-web/__lab/internal/reset.php",
+            "node-api":   "http://node-api:3000/__lab/internal/reset",
+            "flask-svc":  "http://flask-svc:5000/__lab/internal/reset",
+            "spring-svc": "http://spring-svc:8080/__lab/internal/reset",
+            "go-svc":     "http://go-svc:8090/__lab/internal/reset",
         }
         for svc, url in reset_urls.items():
             try:
@@ -354,11 +345,8 @@ def session_stop():
     sess = state["session"]
     sess["ended_at"] = _now_iso()
     start_ts = _parse_ts(sess["started_at"])
-    # Services may emit second-resolution timestamps; compare at second
-    # granularity so events from the start second are not lost.
     if start_ts is not None:
         start_ts = start_ts.replace(microsecond=0)
-    # Collect events that occurred during this session
     session_events = [
         e for e in event_log
         if start_ts is not None
@@ -370,3 +358,59 @@ def session_stop():
     state["session"] = None
     _record_event("session_stop", {"session_id": sess["id"]})
     return sess
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# INTERNAL METADATA SERVICE (absorbed from infra/internal-metadata)
+# Simulates AWS EC2 IMDSv1 for SSRF testing.
+# Accessible via Docker network internal_net at 169.254.169.100:80.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+_FAKE_IAM = """{
+  "Code": "Success",
+  "LastUpdated": "2024-01-01T00:00:00Z",
+  "Type": "AWS-HMAC",
+  "AccessKeyId": "AKIAIOSFODNN7EXAMPLE",
+  "SecretAccessKey": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+  "Token": "AQoXnyc4lcK4w4OIaYnuFT5//////////wEaoAK1wvxJY12r2IKwFhZg==",
+  "Expiration": "2099-01-01T00:00:00Z"
+}"""
+
+_FAKE_META: dict[str, str] = {
+    "ami-id": "ami-deadbeef",
+    "hostname": "ip-10-0-1-42.ec2.internal",
+    "instance-id": "i-deadbeef12345678",
+    "instance-type": "t3.micro",
+    "local-ipv4": "10.0.1.42",
+    "public-ipv4": "1.2.3.4",
+    "placement/availability-zone": "us-east-1a",
+    "placement/region": "us-east-1",
+    "security-groups": "default",
+    "iam/security-credentials/": "vulnforge-role",
+}
+
+from fastapi.responses import PlainTextResponse as _PlainText
+
+
+@app.get("/latest/meta-data/")
+def imds_list():
+    return _PlainText("\n".join(_FAKE_META.keys()))
+
+
+@app.get("/latest/meta-data/{path:path}")
+def imds_get(path: str):
+    if path == "iam/security-credentials/vulnforge-role":
+        return _PlainText(_FAKE_IAM)
+    value = _FAKE_META.get(path)
+    if value is None:
+        raise HTTPException(404, "Not found")
+    return _PlainText(str(value))
+
+
+@app.get("/latest/user-data")
+def imds_userdata():
+    return _PlainText(
+        "#!/bin/bash\nexport DB_PASSWORD=vulnforge_ssrf_test_password\n"
+        "export API_KEY=vulnforge_ssrf_test_api_key_12345\n"
+        "echo 'VulnForge SSRF test successful'\n"
+    )

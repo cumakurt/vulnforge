@@ -1,25 +1,45 @@
 # VulnForge Lab — Docker Compose
-# WARNING: Intentionally vulnerable application. Run only in an isolated local
-# environment (VM / separate Docker network). Never expose to the internet.
+#
+# Architecture: 9 application containers (down from 19).
+# All 78+ vulnerabilities preserved.
+#
+# Merged services:
+#   crawl-lab   → node-api  (/spa/* routes)
+#   graphql-svc → node-api  (/graphql routes)
+#   auth-svc    → flask-svc (/auth/* routes)
+#   legacy-svc  → flask-svc (/legacy/* routes)
+#   internal-metadata → lab-control (/latest/meta-data/* routes)
+#
+# Dropped containers (confirmed zero vuln dependency):
+#   postgres  — flask-svc/spring-svc env var set but code never connects
+#   mongodb   — node-api/graphql-svc use in-memory simulators
+#   redis     — go-svc env var set but code uses in-memory Go structs
+#   mailhog   — no vuln tests SMTP directly
+#
+# Running containers:
+#   1. gateway          Nginx reverse proxy + WAF profiles
+#   2. lab-control      Control plane + IMDSv1 metadata simulator
+#   3. oob-collector    OOB HTTP + DNS callback listener
+#   4. shopforge        Unified scanner portal (synthetic e-commerce site)
+#   5. php-web          PHP/Apache — 26 vulns (SQLi, XSS, CSRF, LFI, …)
+#   6. mysql            Required by php-web (raw mysqli, session fixation)
+#   7. node-api         Node.js — 28 vulns (API, GQL, CRAWL merged)
+#   8. flask-svc        Python  — 25 vulns (PY, OAUTH, LEG merged)
+#   9. spring-svc       Java    — 10 vulns (XXE, deserialization, JNDI, …)
+#  10. go-svc           Go      — 10 vulns (race condition, goroutine, …)
 #
 # Usage:
-#   docker compose --profile core up -d          # minimal lab
-#   docker compose --profile full up -d          # all services
-#   docker compose --profile api up -d           # API-focused
-#   make up                                       # same as --profile core
+#   ./docker_install.sh           # starts all services
+#   docker compose up -d          # same (COMPOSE_PROFILES=full in .env)
+#   make up                       # alias
 #
 # All ports are bound to 127.0.0.1 only.
-
-x-common-limits: &common-limits
-  cpus: "0.50"
-  memory: 256M
-  pids: 200
 
 x-no-new-privileges: &no-new-privileges
   security_opt:
     - no-new-privileges:true
 
-x-healthcheck-defaults: &hc-defaults
+x-hc: &hc
   interval: 15s
   timeout: 5s
   start_period: 30s
@@ -32,7 +52,7 @@ services:
     build: ./gateway
     image: vulnforge/gateway:latest
     container_name: vulnforge-gateway
-    profiles: [core, full, api, infra, waf, crawl]
+    profiles: [core, full, api, waf]
     ports:
       - "${BIND_HOST:-127.0.0.1}:${GATEWAY_HTTP_PORT:-8000}:8000"
       - "${BIND_HOST:-127.0.0.1}:${GATEWAY_HTTPS_PORT:-8443}:8443"
@@ -44,21 +64,26 @@ services:
         limits: { cpus: "0.50", memory: 128M }
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8000/"]
-      <<: *hc-defaults
+      <<: *hc
     restart: unless-stopped
 
-  # ── Lab Control ───────────────────────────────────────────────────────────
+  # ── Lab Control + IMDSv1 metadata simulator ───────────────────────────────
+  # Also serves /latest/meta-data/* (absorbed from internal-metadata)
+  # Fixed IP 169.254.169.100 on internal_net for realistic SSRF payloads.
+  # Hostname alias "internal-metadata" so existing SSRF payloads still work.
   lab-control:
     build: ./lab/lab-control
     image: vulnforge/lab-control:latest
     container_name: vulnforge-lab-control
-    profiles: [core, full, api, infra, waf, crawl]
+    profiles: [core, full, api, waf]
     ports:
       - "${BIND_HOST:-127.0.0.1}:${LAB_CONTROL_PORT:-9100}:9100"
     networks:
-      - lab_net
-      # Needed to health-check the SSRF metadata target on internal_net.
-      - internal_net
+      lab_net: {}
+      internal_net:
+        ipv4_address: 169.254.169.100
+        aliases:
+          - internal-metadata
     volumes:
       - ./lab/truth:/app/lab/truth:ro
     environment:
@@ -71,7 +96,7 @@ services:
         limits: { cpus: "0.25", memory: 128M }
     healthcheck:
       test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9100/__lab/mode')"]
-      <<: *hc-defaults
+      <<: *hc
     restart: unless-stopped
 
   # ── OOB Collector ─────────────────────────────────────────────────────────
@@ -79,7 +104,7 @@ services:
     build: ./infra/oob-collector
     image: vulnforge/oob-collector:latest
     container_name: vulnforge-oob-collector
-    profiles: [full, infra]
+    profiles: [core, full, api, waf]
     ports:
       - "${BIND_HOST:-127.0.0.1}:${OOB_COLLECTOR_HTTP_PORT:-9000}:9000"
       - "${BIND_HOST:-127.0.0.1}:${OOB_COLLECTOR_DNS_PORT:-5353}:5353/udp"
@@ -91,10 +116,34 @@ services:
         limits: { cpus: "0.25", memory: 128M }
     healthcheck:
       test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9000/health')"]
-      <<: *hc-defaults
+      <<: *hc
+    restart: unless-stopped
+
+  # ── ShopForge Portal ──────────────────────────────────────────────────────
+  # Unified scanner target: realistic e-commerce site, all vulns discoverable
+  # from a single URL through natural navigation + crawling.
+  shopforge:
+    build: ./services/shopforge
+    image: vulnforge/shopforge:latest
+    container_name: vulnforge-shopforge
+    profiles: [core, full, api, waf]
+    networks:
+      - lab_net
+    environment:
+      - PORT=3100
+    <<: *no-new-privileges
+    deploy:
+      resources:
+        limits: { cpus: "0.25", memory: 128M }
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:3100/health')"]
+      <<: *hc
     restart: unless-stopped
 
   # ── PHP Web ───────────────────────────────────────────────────────────────
+  # 26 vulns: AUTH-001..004, CMDI-001..002, CONF-001..002, CRYPTO-001,
+  #   CSRF-001, IDOR-001..002, INFO-001, LFI-001, REDIR-001,
+  #   SQLI-001..007, UPLOAD-001, XSS-001..003
   php-web:
     build: ./services/php-web
     image: vulnforge/php-web:latest
@@ -121,214 +170,10 @@ services:
         limits: { cpus: "0.75", memory: 256M }
     healthcheck:
       test: ["CMD", "curl", "-fs", "http://127.0.0.1/health.php"]
-      <<: *hc-defaults
+      <<: *hc
     restart: unless-stopped
 
-  # ── Node API ──────────────────────────────────────────────────────────────
-  node-api:
-    build: ./services/node-api
-    image: vulnforge/node-api:latest
-    container_name: vulnforge-node-api
-    profiles: [full, api]
-    networks:
-      - lab_net
-      - data_net
-      - internal_net
-    environment:
-      - MONGO_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME:-vulnlab}:${MONGO_INITDB_ROOT_PASSWORD:-vulnlab_pass}@mongodb:27017/${MONGO_INITDB_DATABASE:-vulnforge}?authSource=admin
-      - JWT_WEAK_SECRET=${JWT_WEAK_SECRET:-secret}
-      - SEED_PROFILE=${SEED_PROFILE:-small}
-      - LAB_CONTROL_URL=http://lab-control:9100
-      - OOB_COLLECTOR_URL=http://oob-collector:9000
-      - PORT=3000
-    depends_on:
-      lab-control:
-        condition: service_healthy
-    <<: *no-new-privileges
-    deploy:
-      resources:
-        limits: { cpus: "0.75", memory: 256M }
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/health"]
-      <<: *hc-defaults
-    restart: unless-stopped
-
-  # ── Flask Service ─────────────────────────────────────────────────────────
-  flask-svc:
-    build: ./services/flask-svc
-    image: vulnforge/flask-svc:latest
-    container_name: vulnforge-flask-svc
-    profiles: [full, api]
-    networks:
-      - lab_net
-      - data_net
-      - internal_net
-    environment:
-      - POSTGRES_DSN=postgresql://${POSTGRES_USER:-vulnlab}:${POSTGRES_PASSWORD:-vulnlab_pass}@postgres:5432/${POSTGRES_DB:-vulnforge}
-      - LAB_CONTROL_URL=http://lab-control:9100
-      - OOB_COLLECTOR_URL=http://oob-collector:9000
-    depends_on:
-      lab-control:
-        condition: service_healthy
-    <<: *no-new-privileges
-    deploy:
-      resources:
-        limits: { cpus: "0.75", memory: 256M }
-    healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health')"]
-      <<: *hc-defaults
-    restart: unless-stopped
-
-  # ── ShopForge Portal ─────────────────────────────────────────────────────
-  shopforge:
-    build: ./services/shopforge
-    image: vulnforge/shopforge:latest
-    container_name: vulnforge-shopforge
-    profiles: [core, full, api, waf, crawl]
-    networks:
-      - lab_net
-    environment:
-      - PORT=3100
-    <<: *no-new-privileges
-    deploy:
-      resources:
-        limits: { cpus: "0.25", memory: 128M }
-    healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:3100/health')"]
-      <<: *hc-defaults
-    restart: unless-stopped
-
-  # ── Spring Service ────────────────────────────────────────────────────────
-  spring-svc:
-    build: ./services/spring-svc
-    image: vulnforge/spring-svc:latest
-    container_name: vulnforge-spring-svc
-    profiles: [full]
-    networks:
-      - lab_net
-      - data_net
-      - internal_net
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-vulnforge}
-      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-vulnlab}
-      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-vulnlab_pass}
-      - LAB_CONTROL_URL=http://lab-control:9100
-    <<: *no-new-privileges
-    deploy:
-      resources:
-        limits: { cpus: "1.0", memory: 512M }
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
-      <<: *hc-defaults
-    restart: unless-stopped
-
-  # ── Go Service ────────────────────────────────────────────────────────────
-  go-svc:
-    build: ./services/go-svc
-    image: vulnforge/go-svc:latest
-    container_name: vulnforge-go-svc
-    profiles: [full]
-    networks:
-      - lab_net
-      - data_net
-      - internal_net
-    environment:
-      - REDIS_URL=redis://redis:6379
-      - LAB_CONTROL_URL=http://lab-control:9100
-      - OOB_COLLECTOR_URL=http://oob-collector:9000
-      - PORT=8090
-    depends_on:
-      redis:
-        condition: service_healthy
-    <<: *no-new-privileges
-    deploy:
-      resources:
-        limits: { cpus: "0.75", memory: 256M }
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8090/health"]
-      <<: *hc-defaults
-    restart: unless-stopped
-
-  # ── GraphQL Service ───────────────────────────────────────────────────────
-  graphql-svc:
-    build: ./services/graphql-svc
-    image: vulnforge/graphql-svc:latest
-    container_name: vulnforge-graphql-svc
-    profiles: [full, api]
-    networks:
-      - lab_net
-      - data_net
-      - internal_net
-    environment:
-      - MONGO_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME:-vulnlab}:${MONGO_INITDB_ROOT_PASSWORD:-vulnlab_pass}@mongodb:27017/${MONGO_INITDB_DATABASE:-vulnforge}?authSource=admin
-      - LAB_CONTROL_URL=http://lab-control:9100
-      - PORT=4000
-    <<: *no-new-privileges
-    deploy:
-      resources:
-        limits: { cpus: "0.50", memory: 256M }
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:4000/health"]
-      <<: *hc-defaults
-    restart: unless-stopped
-
-  # ── Crawl Lab ─────────────────────────────────────────────────────────────
-  crawl-lab:
-    build: ./services/crawl-lab
-    image: vulnforge/crawl-lab:latest
-    container_name: vulnforge-crawl-lab
-    profiles: [crawl, full]
-    networks:
-      - lab_net
-    environment:
-      - PORT=3001
-    <<: *no-new-privileges
-    deploy:
-      resources:
-        limits: { cpus: "0.50", memory: 256M }
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3001/health"]
-      <<: *hc-defaults
-    restart: unless-stopped
-
-  # ── Legacy Service ────────────────────────────────────────────────────────
-  legacy-svc:
-    build: ./services/legacy-svc
-    image: vulnforge/legacy-svc:latest
-    container_name: vulnforge-legacy-svc
-    profiles: [full]
-    networks:
-      - lab_net
-    <<: *no-new-privileges
-    deploy:
-      resources:
-        limits: { cpus: "0.50", memory: 256M }
-    healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8888/health')"]
-      <<: *hc-defaults
-    restart: unless-stopped
-
-  # ── Auth Service ──────────────────────────────────────────────────────────
-  auth-svc:
-    build: ./services/auth-svc
-    image: vulnforge/auth-svc:latest
-    container_name: vulnforge-auth-svc
-    profiles: [full]
-    networks:
-      - lab_net
-    <<: *no-new-privileges
-    deploy:
-      resources:
-        limits: { cpus: "0.50", memory: 256M }
-    healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health')"]
-      <<: *hc-defaults
-    restart: unless-stopped
-
-  # ────────────────────────────────────────────────────────────────────────
-  # DATA LAYER
-  # ────────────────────────────────────────────────────────────────────────
-
+  # ── MySQL ─────────────────────────────────────────────────────────────────
   mysql:
     image: mysql:8.0
     container_name: vulnforge-mysql
@@ -349,108 +194,112 @@ services:
         limits: { cpus: "0.50", memory: 256M }
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-vulnforge_root}"]
-      <<: *hc-defaults
+      <<: *hc
     restart: unless-stopped
 
-  postgres:
-    image: postgres:16-alpine
-    container_name: vulnforge-postgres
-    profiles: [full, api]
-    networks:
-      - data_net
-    environment:
-      - POSTGRES_DB=${POSTGRES_DB:-vulnforge}
-      - POSTGRES_USER=${POSTGRES_USER:-vulnlab}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-vulnlab_pass}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    <<: *no-new-privileges
-    deploy:
-      resources:
-        limits: { cpus: "0.50", memory: 256M }
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER:-vulnlab}"]
-      <<: *hc-defaults
-    restart: unless-stopped
-
-  mongodb:
-    image: mongo:7.0
-    container_name: vulnforge-mongodb
-    profiles: [full, api]
-    networks:
-      - data_net
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME:-vulnlab}
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD:-vulnlab_pass}
-      - MONGO_INITDB_DATABASE=${MONGO_INITDB_DATABASE:-vulnforge}
-    volumes:
-      - mongo_data:/data/db
-    <<: *no-new-privileges
-    deploy:
-      resources:
-        limits: { cpus: "0.50", memory: 256M }
-    healthcheck:
-      test: ["CMD-SHELL", "mongosh --quiet -u $$MONGO_INITDB_ROOT_USERNAME -p $$MONGO_INITDB_ROOT_PASSWORD --authenticationDatabase admin --eval 'db.adminCommand(\"ping\").ok' | grep -q 1"]
-      <<: *hc-defaults
-    restart: unless-stopped
-
-  redis:
-    image: redis:7-alpine
-    container_name: vulnforge-redis
-    profiles: [full, infra]
-    networks:
-      - data_net
-      - exposed_net
-    # Intentionally no password — for open Redis vulnerability testing
-    command: redis-server --save "" --appendonly no
-    <<: *no-new-privileges
-    deploy:
-      resources:
-        limits: { cpus: "0.25", memory: 64M }
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      <<: *hc-defaults
-    restart: unless-stopped
-    ports:
-      # Redis intentionally exposed without auth (exposed_net vulnerability)
-      - "${BIND_HOST:-127.0.0.1}:6379:6379"
-
-  # ────────────────────────────────────────────────────────────────────────
-  # INFRA LAYER (exposed services for port-scan / config testing)
-  # ────────────────────────────────────────────────────────────────────────
-
-  mailhog:
-    image: mailhog/mailhog:v1.0.1
-    container_name: vulnforge-mailhog
-    profiles: [infra, full]
+  # ── Node API ──────────────────────────────────────────────────────────────
+  # 28 vulns: API-001..014 + GQL-001..006 + CRAWL-001..008
+  #   (graphql-svc and crawl-lab merged in)
+  node-api:
+    build: ./services/node-api
+    image: vulnforge/node-api:latest
+    container_name: vulnforge-node-api
+    profiles: [core, full, api]
     networks:
       - lab_net
-      - exposed_net
-    ports:
-      - "${BIND_HOST:-127.0.0.1}:1025:1025"   # SMTP
-      - "${BIND_HOST:-127.0.0.1}:8025:8025"   # Web UI
+      - internal_net
+    environment:
+      - JWT_WEAK_SECRET=${JWT_WEAK_SECRET:-secret}
+      - SEED_PROFILE=${SEED_PROFILE:-small}
+      - LAB_CONTROL_URL=http://lab-control:9100
+      - OOB_COLLECTOR_URL=http://oob-collector:9000
+      - PORT=3000
+    depends_on:
+      lab-control:
+        condition: service_healthy
     <<: *no-new-privileges
     deploy:
       resources:
-        limits: { cpus: "0.10", memory: 64M }
+        limits: { cpus: "0.75", memory: 256M }
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/health"]
+      <<: *hc
     restart: unless-stopped
 
-  # Internal metadata service (simulates cloud IMDSv1 for SSRF testing)
-  internal-metadata:
-    build: ./infra/internal-metadata
-    image: vulnforge/internal-metadata:latest
-    container_name: vulnforge-metadata
-    profiles: [full, infra]
+  # ── Flask Service ─────────────────────────────────────────────────────────
+  # 25 vulns: PY-001..011 + OAUTH-001..007 + LEG-001..007
+  #   (auth-svc and legacy-svc merged in)
+  flask-svc:
+    build: ./services/flask-svc
+    image: vulnforge/flask-svc:latest
+    container_name: vulnforge-flask-svc
+    profiles: [core, full, api]
     networks:
-      internal_net:
-        ipv4_address: 169.254.169.100  # Mimics AWS IMDSv1 IP within Docker
+      - lab_net
+      - internal_net
+    environment:
+      - LAB_CONTROL_URL=http://lab-control:9100
+      - OOB_COLLECTOR_URL=http://oob-collector:9000
+    depends_on:
+      lab-control:
+        condition: service_healthy
     <<: *no-new-privileges
     deploy:
       resources:
-        limits: { cpus: "0.10", memory: 64M }
+        limits: { cpus: "0.75", memory: 256M }
     healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1/latest/meta-data/')"]
-      <<: *hc-defaults
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health')"]
+      <<: *hc
+    restart: unless-stopped
+
+  # ── Spring Service ────────────────────────────────────────────────────────
+  # 10 vulns: JAVA-001..010 (JVM-exclusive: XMLDecoder, SAX XXE, DES/ECB,
+  #   javax.crypto, JNDI lookup pattern — cannot be replicated in Python/Node)
+  spring-svc:
+    build: ./services/spring-svc
+    image: vulnforge/spring-svc:latest
+    container_name: vulnforge-spring-svc
+    profiles: [core, full]
+    networks:
+      - lab_net
+      - internal_net
+    environment:
+      - LAB_CONTROL_URL=http://lab-control:9100
+      - OOB_COLLECTOR_URL=http://oob-collector:9000
+    <<: *no-new-privileges
+    deploy:
+      resources:
+        limits: { cpus: "1.0", memory: 512M }
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
+      <<: *hc
+    restart: unless-stopped
+
+  # ── Go Service ────────────────────────────────────────────────────────────
+  # 10 vulns: GO-001..011 (goroutine race GO-003, debug.Stack() GO-010
+  #   require Go runtime — cannot be replicated in Python/Node)
+  go-svc:
+    build: ./services/go-svc
+    image: vulnforge/go-svc:latest
+    container_name: vulnforge-go-svc
+    profiles: [core, full]
+    networks:
+      - lab_net
+      - internal_net
+    environment:
+      - LAB_CONTROL_URL=http://lab-control:9100
+      - OOB_COLLECTOR_URL=http://oob-collector:9000
+      - PORT=8090
+    depends_on:
+      lab-control:
+        condition: service_healthy
+    <<: *no-new-privileges
+    deploy:
+      resources:
+        limits: { cpus: "0.75", memory: 256M }
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8090/health"]
+      <<: *hc
     restart: unless-stopped
 
 # ────────────────────────────────────────────────────────────────────────────
@@ -459,22 +308,16 @@ services:
 networks:
   lab_net:
     driver: bridge
-    internal: false   # Gateway needs to route from host
     name: vulnforge_lab_net
 
   data_net:
     driver: bridge
-    internal: true    # Only app services reach databases
+    internal: true
     name: vulnforge_data_net
-
-  exposed_net:
-    driver: bridge
-    internal: false   # Exposed infra services (Redis, ES, etc.)
-    name: vulnforge_exposed_net
 
   internal_net:
     driver: bridge
-    internal: true    # SSRF internal targets
+    internal: true
     name: vulnforge_internal_net
     ipam:
       config:
@@ -486,7 +329,3 @@ networks:
 volumes:
   mysql_data:
     name: vulnforge_mysql_data
-  postgres_data:
-    name: vulnforge_postgres_data
-  mongo_data:
-    name: vulnforge_mongo_data

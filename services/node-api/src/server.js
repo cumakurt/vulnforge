@@ -647,6 +647,339 @@ route('POST', /^\/__lab\/internal\/seed$/, async (req, res, m, url) => {
   sendJson(res, 200, { seeded: true, profile });
 });
 
+// ─── GraphQL routes (merged from graphql-svc) ────────────────────────────────
+// GQL-001..006: introspection, field suggestion, batching, OTP bruteforce,
+// alias amplification, BOLA in user resolver.
+
+const GQL_USERS = [
+  { id: 1, username: 'admin', email: 'admin@vulnforge.lab', role: 'admin', ssn: '111-11-1111', otp: '4821' },
+  { id: 2, username: 'alice', email: 'alice@vulnforge.lab', role: 'user',  ssn: '222-22-2222', otp: '1111' },
+  { id: 3, username: 'bob',   email: 'bob@vulnforge.lab',   role: 'user',  ssn: '333-33-3333', otp: '2222' },
+];
+const gqlOtpAttempts = {};
+
+const GQL_SCHEMA = {
+  queryType: { name: 'Query' },
+  types: [
+    { kind: 'OBJECT', name: 'User', fields: ['id','username','email','role','ssn'].map(n=>({name:n,type:'String'})) },
+    { kind: 'OBJECT', name: 'Query', fields: [
+      { name:'hello', type:'String' },
+      { name:'user', type:'User', args:[{name:'id',type:'Int'}] },
+      { name:'users', type:'User' },
+      { name:'verifyOtp', type:'Boolean', args:[{name:'userId',type:'Int'},{name:'code',type:'String'}] },
+    ]},
+    { kind:'SCALAR', name:'Int' }, { kind:'SCALAR', name:'String' }, { kind:'SCALAR', name:'Boolean' },
+  ],
+};
+
+function gqlTokenize(src) {
+  return src.replace(/#[^\n]*/g,' ').match(/[_A-Za-z][_0-9A-Za-z]*|[-+]?\d+(?:\.\d+)?|"(?:[^"\\]|\\.)*"|[{}():,!$\[\]]/g)||[];
+}
+
+function gqlParseSelection(tokens, state) {
+  const fields = [];
+  if (tokens[state.index]!=='{') return fields;
+  state.index++;
+  while (state.index<tokens.length && tokens[state.index]!=='}') {
+    const first=tokens[state.index++]; let alias=first, name=first;
+    if (tokens[state.index]===':') { state.index++; name=tokens[state.index++]; }
+    const args={};
+    if (tokens[state.index]==='(') {
+      state.index++;
+      while (state.index<tokens.length && tokens[state.index]!==')') {
+        if (tokens[state.index]===',') { state.index++; continue; }
+        const k=tokens[state.index++]; if (tokens[state.index]===':') state.index++;
+        const v=tokens[state.index++]; try { args[k]=JSON.parse(v); } catch { args[k]=v; }
+      }
+      if (tokens[state.index]===')') state.index++;
+    }
+    let children=null;
+    if (tokens[state.index]==='{') children=gqlParseSelection(tokens,state);
+    fields.push({alias,name,args,children});
+  }
+  if (tokens[state.index]==='}') state.index++;
+  return fields;
+}
+
+function gqlExecute(source, options={}) {
+  const tokens=gqlTokenize(source), state={index:0};
+  if (['query','mutation'].includes(tokens[state.index])) { state.index++; if(tokens[state.index]&&!['{','('].includes(tokens[state.index])) state.index++; }
+  const fields=gqlParseSelection(tokens,state);
+  const ctx={schema:options.introspection===false?null:GQL_SCHEMA, viewerId:Number(options.viewerId||0), enforceOwnership:options.enforceOwnership===true, crossUserReads:[], unknownFields:[], otpResults:[]};
+  const data={};
+  for (const f of fields) {
+    switch(f.name) {
+      case '__typename': data[f.alias]='Query'; break;
+      case '__schema':   data[f.alias]=ctx.schema; break;
+      case '__type':     data[f.alias]=GQL_SCHEMA.types.find(t=>t.name===f.args.name)||null; break;
+      case 'hello':      data[f.alias]='Hello from VulnForge GraphQL'; break;
+      case 'user': {
+        const id=Number(f.args.id||0), user=GQL_USERS.find(u=>u.id===id);
+        if (!user) { data[f.alias]=null; break; }
+        if (ctx.enforceOwnership && id!==ctx.viewerId) { data[f.alias]=null; break; }
+        if (!ctx.enforceOwnership && id!==ctx.viewerId) ctx.crossUserReads.push(id);
+        const row={}; for(const c of (f.children||[{name:'username'}])) { if(c.name in user) row[c.alias]=user[c.name]; }
+        data[f.alias]=row; break;
+      }
+      case 'users': {
+        const visible=ctx.enforceOwnership?GQL_USERS.filter(u=>u.id===ctx.viewerId):GQL_USERS;
+        data[f.alias]=visible.map(u=>{ const r={}; for(const c of (f.children||[{name:'username'}])) { if(c.name in u) r[c.alias]=u[c.name]; } return r; }); break;
+      }
+      case 'verifyOtp': {
+        const uid=Number(f.args.userId||0), code=String(f.args.code||''), key=`u${uid}`;
+        gqlOtpAttempts[key]=(gqlOtpAttempts[key]||0)+1;
+        const user=GQL_USERS.find(u=>u.id===uid);
+        const ok=!!user&&user.otp===code;
+        ctx.otpResults.push({userId:uid,ok,attempts:gqlOtpAttempts[key]});
+        data[f.alias]=ok; break;
+      }
+      default: ctx.unknownFields.push(f.name); data[f.alias]=null;
+    }
+  }
+  return {data, context:ctx, fieldCount:fields.length};
+}
+
+function gqlLevenshtein(a,b) {
+  const m=Array.from({length:a.length+1},(_,i)=>[i]); for(let j=1;j<=b.length;j++) m[0][j]=j;
+  for(let i=1;i<=a.length;i++) for(let j=1;j<=b.length;j++) m[i][j]=Math.min(m[i-1][j]+1,m[i][j-1]+1,m[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
+  return m[a.length][b.length];
+}
+
+function gqlSuggest(name) {
+  const cands=GQL_SCHEMA.types.find(t=>t.name==='Query').fields.map(f=>f.name);
+  let best=cands[0],bestScore=Infinity;
+  for (const c of cands) { const s=gqlLevenshtein(name,c); if(s<bestScore){bestScore=s;best=c;} }
+  return best;
+}
+
+function gqlBuildResponse(result, isSafe) {
+  const resp={data:result.data};
+  if (result.context.unknownFields.length) {
+    resp.errors=result.context.unknownFields.map(n=>({message:isSafe?'unknown field':`Cannot query field "${n}" on type "Query". Did you mean "${gqlSuggest(n)}"?`}));
+  }
+  return resp;
+}
+
+async function handleGraphQL(req, res, isSafe) {
+  const raw = await readBody(req);
+  let payload;
+  try { payload = raw ? JSON.parse(raw) : {}; } catch { return sendJson(res, 400, {errors:[{message:'invalid JSON body'}]}); }
+
+  if (Array.isArray(payload)) {
+    if (isSafe && payload.length > 5) return sendJson(res, 400, {errors:[{message:'batch size limit exceeded'}]});
+    if (!isSafe && payload.length > 1) labTrigger('GQL-003', req, {batch_size: payload.length});
+    const viewerId = req.headers['x-user-id'];
+    const results = payload.map(e => gqlExecute(String(e.query||''), {introspection:!isSafe, enforceOwnership:isSafe, viewerId}));
+    const totalFields = results.reduce((s,r)=>s+r.fieldCount,0);
+    if (isSafe && totalFields>20) return sendJson(res, 400, {errors:[{message:'query complexity limit exceeded'}]});
+    if (!isSafe && totalFields>100) labTrigger('GQL-005', req, {aliases:totalFields});
+    return sendJson(res, 200, results.map(r=>gqlBuildResponse(r,isSafe)), {'x-batch-size': String(payload.length)});
+  }
+
+  const source = String(payload.query||''), viewerId = req.headers['x-user-id'];
+  if (isSafe) {
+    if (source.includes('__schema')||source.includes('__type')) return sendJson(res,200,{errors:[{message:'introspection is disabled'}]});
+    const result=gqlExecute(source,{introspection:false,enforceOwnership:true,viewerId});
+    if (result.fieldCount>20) return sendJson(res,400,{errors:[{message:'query complexity limit exceeded'}]});
+    if (result.context.unknownFields.length) return sendJson(res,200,{errors:[{message:'unknown field'}]});
+    if (result.context.otpResults.some(e=>e.attempts>5)) return sendJson(res,429,{errors:[{message:'too many attempts'}]});
+    return sendJson(res,200,{data:result.data});
+  }
+  const result=gqlExecute(source,{viewerId});
+  if (source.includes('__schema')||source.includes('__type')) labTrigger('GQL-001',req,{});
+  if (result.fieldCount>100) labTrigger('GQL-005',req,{aliases:result.fieldCount});
+  if (result.context.crossUserReads.length) labTrigger('GQL-006',req,{targets:result.context.crossUserReads});
+  if (result.context.otpResults.some(e=>e.attempts>5)) labTrigger('GQL-004',req,{attempts:result.context.otpResults});
+  return sendJson(res,200,gqlBuildResponse(result,false));
+}
+
+route('POST', /^\/graphql\/?$/, async (req, res) => handleGraphQL(req, res, false));
+route('POST', /^\/graphql_safe\/?$/, async (req, res) => handleGraphQL(req, res, true));
+route('GET', /^\/graphql\/?$/, async (req, res) => sendJson(res, 200, {service:'graphql', hint:'POST a JSON body with {query:"..."}'}));
+
+route('POST', /^\/__lab\/internal\/reset_gql$/, async (req, res) => {
+  for (const key of Object.keys(gqlOtpAttempts)) delete gqlOtpAttempts[key];
+  sendJson(res, 200, {reset:true});
+});
+
+// ─── Crawl-lab routes (merged from crawl-lab service) ────────────────────────
+// CRAWL-001..008: SPA crawler surface for discovery benchmarking.
+
+const SPA_INDEX_HTML = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ShopForge SPA</title>
+<base href="/spa/">
+</head>
+<body>
+<div id="app">Loading</div>
+<a href="#/dashboard">Dashboard</a>
+<a href="#/settings">Settings</a>
+<a data-href="/spa/panel">Support panel</a>
+<script src="/spa/app.js"></script>
+<script>
+  window.__ROUTES__ = ['#/dashboard', '#/settings', '#/orders'];
+</script>
+</body>
+</html>`;
+
+const SPA_APP_JS = `// ShopForge SPA bundle
+const INTERNAL_API_KEY = 'vulnforge_spa_internal_key_9f2c';
+const INTERNAL_ENDPOINT = '/spa/panel';
+const EXPORT_ENDPOINT = '/spa/api/export';
+function navigate(hash) { document.getElementById('app').innerHTML = 'Route: ' + hash; }
+window.addEventListener('hashchange', () => navigate(location.hash));
+navigate(location.hash || '#/dashboard');
+fetch('/spa/api/products?page=1').then(r=>r.json()).then(d=>console.log('loaded', d.count));
+fetch(INTERNAL_ENDPOINT, { headers: { 'X-Internal-Key': INTERNAL_API_KEY } });
+// sourceMappingURL=app.js.map
+`;
+
+const SPA_APP_MAP = JSON.stringify({
+  version: 3, file: 'app.js',
+  sources: ['../src/app.ts', '../src/secret/config.ts'],
+  sourcesContent: [
+    "const INTERNAL_API_KEY = 'vulnforge_spa_internal_key_9f2c';",
+    "export const ADMIN_PANEL = '/spa/panel';\nexport const DB_PASSWORD = 'spa_debug_password';",
+  ],
+  mappings: '',
+});
+
+const spaProducts = Array.from({ length: 5000 }, (_, i) => ({
+  id: i + 1, name: `SPA product ${i + 1}`, price: Number(((i % 90) + 1.99).toFixed(2)),
+}));
+
+function sendHtml(res, status, body, extraHeaders = {}) {
+  const buf = Buffer.from(body);
+  res.writeHead(status, { 'content-type': 'text/html; charset=utf-8', 'content-length': buf.length, ...extraHeaders });
+  res.end(buf);
+}
+
+function sendText(res, status, body, type = 'text/plain', extraHeaders = {}) {
+  const buf = Buffer.from(body);
+  res.writeHead(status, { 'content-type': type, 'content-length': buf.length, ...extraHeaders });
+  res.end(buf);
+}
+
+// @vuln id=CRAWL-001 name="robots.txt discloses hidden application paths" cwe=CWE-200 owasp=A05:2021 type=robots-disclosure level=1 param=none method=GET service=node-api url=/spa/robots.txt param_loc=path needs_oob=false auth=false detection=passive tags=discovery,info-leak,robots proof_kind=marker proof_desc="Disallow entries reveal the support panel and export endpoint"
+route('GET', /^\/spa\/robots\.txt$/, async (req, res) => {
+  labTrigger('CRAWL-001', req, {});
+  sendText(res, 200, [
+    'User-agent: *', 'Disallow: /spa/panel', 'Disallow: /spa/api/export',
+    'Disallow: /spa/api/products', 'Sitemap: /spa/sitemap.xml', '',
+  ].join('\n'));
+});
+
+// @control id=CRAWL-001-C twin_of=CRAWL-001 url=/spa/robots_safe.txt method=GET param=none service=node-api param_loc=path
+route('GET', /^\/spa\/robots_safe\.txt$/, async (req, res) => {
+  sendText(res, 200, 'User-agent: *\nDisallow: /\n');
+});
+
+route('GET', /^\/spa\/sitemap\.xml$/, async (req, res) => {
+  sendText(res, 200, `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>/spa/</loc></url><url><loc>/spa/#/dashboard</loc></url><url><loc>/spa/panel</loc></url></urlset>`, 'application/xml');
+});
+
+// @vuln id=CRAWL-002 name="JavaScript source map exposes source code" cwe=CWE-540 owasp=A05:2021 type=source-map-exposure level=1 param=none method=GET service=node-api url=/spa/app.js.map param_loc=path needs_oob=false auth=false detection=passive tags=discovery,info-leak,source-map proof_kind=marker proof_desc="The .map file serves original sources including embedded credentials"
+route('GET', /^\/spa\/app\.js\.map$/, async (req, res) => {
+  labTrigger('CRAWL-002', req, {});
+  sendText(res, 200, SPA_APP_MAP, 'application/json');
+});
+
+// @control id=CRAWL-002-C twin_of=CRAWL-002 url=/spa/app_safe.js.map method=GET param=none service=node-api param_loc=path
+route('GET', /^\/spa\/app_safe\.js\.map$/, async (req, res) => {
+  sendJson(res, 404, { error: 'not found' });
+});
+
+// @vuln id=CRAWL-003 name="API key embedded in the client bundle" cwe=CWE-798 owasp=A02:2021 type=hardcoded-secret level=1 param=none method=GET service=node-api url=/spa/app.js param_loc=path needs_oob=false auth=false detection=passive tags=discovery,info-leak,secret proof_kind=marker proof_desc="The bundle contains a hard-coded internal API key"
+route('GET', /^\/spa\/app\.js$/, async (req, res) => {
+  labTrigger('CRAWL-003', req, {});
+  sendText(res, 200, SPA_APP_JS, 'application/javascript');
+});
+
+// @control id=CRAWL-003-C twin_of=CRAWL-003 url=/spa/app_safe.js method=GET param=none service=node-api param_loc=path
+route('GET', /^\/spa\/app_safe\.js$/, async (req, res) => {
+  sendText(res, 200, "const INTERNAL_ENDPOINT = '/spa/panel';\n", 'application/javascript');
+});
+
+// @vuln id=CRAWL-004 name="Soft 404 returns HTTP 200" cwe=CWE-391 owasp=A05:2021 type=soft-404 level=2 param=path method=GET service=node-api url=/spa/this-page-does-not-exist param_loc=path needs_oob=false auth=false detection=passive tags=discovery,soft-404 proof_kind=marker proof_desc="Unknown paths return 200 with a 'not found' body, confusing crawlers"
+route('GET', /^\/spa\/this-page-does-not-exist$/, async (req, res) => {
+  labTrigger('CRAWL-004', req, {});
+  sendHtml(res, 200, '<html><body><h1>Page not found</h1></body></html>');
+});
+
+// @control id=CRAWL-004-C twin_of=CRAWL-004 url=/spa/not-found-safe-404 method=GET param=path service=node-api param_loc=path
+route('GET', /^\/spa\/not-found-safe-404$/, async (req, res) => {
+  sendHtml(res, 404, '<html><body><h1>Page not found</h1></body></html>');
+});
+
+// @vuln id=CRAWL-005 name="Unbounded pagination trap" cwe=CWE-770 owasp=A04:2021 type=infinite-pagination level=2 param=page method=GET service=node-api url=/spa/api/products param_loc=query needs_oob=false auth=false detection=passive tags=discovery,pagination,dos proof_kind=marker proof_desc="page parameter has no upper bound and always returns a next page"
+route('GET', /^\/spa\/api\/products$/, async (req, res, m, url) => {
+  const page = Number(url.searchParams.get('page') || 1);
+  const size = 20;
+  const start = Math.max(0, (page - 1) * size);
+  const items = spaProducts.slice(start, start + size);
+  if (page > 100) labTrigger('CRAWL-005', req, { page });
+  sendJson(res, 200, { page, items, next: `/spa/api/products?page=${page + 1}`, total: spaProducts.length });
+});
+
+// @control id=CRAWL-005-C twin_of=CRAWL-005 url=/spa/api/products_safe method=GET param=page service=node-api param_loc=query
+route('GET', /^\/spa\/api\/products_safe$/, async (req, res, m, url) => {
+  const requested = Number(url.searchParams.get('page') || 1);
+  const page = Math.min(Math.max(requested, 1), 50);
+  const start = (page - 1) * 20;
+  sendJson(res, 200, { page, items: spaProducts.slice(start, start + 20), next: page < 50 ? `/spa/api/products_safe?page=${page + 1}` : null });
+});
+
+// @vuln id=CRAWL-006 name="WebSocket upgrade accepts any Origin" cwe=CWE-346 owasp=A01:2021 type=cswsh level=2 param=Origin method=GET service=node-api url=/spa/ws-ticket param_loc=header needs_oob=false auth=false detection=passive tags=websocket,cswsh,origin proof_kind=marker proof_desc="Upgrade is allowed for an arbitrary attack origin"
+route('GET', /^\/spa\/ws-ticket$/, async (req, res) => {
+  const origin = req.headers.origin || '';
+  labTrigger('CRAWL-006', req, { origin });
+  sendJson(res, 200, { upgrade_allowed: true, origin });
+});
+
+// @control id=CRAWL-006-C twin_of=CRAWL-006 url=/spa/ws-ticket_safe method=GET param=Origin service=node-api param_loc=header
+route('GET', /^\/spa\/ws-ticket_safe$/, async (req, res) => {
+  const origin = req.headers.origin || '';
+  const allowed = origin === 'http://127.0.0.1:8000';
+  sendJson(res, allowed ? 200 : 403, { upgrade_allowed: allowed });
+});
+
+// @vuln id=CRAWL-007 name="SSE stream leaks session token to any client" cwe=CWE-200 owasp=A05:2021 type=sse-data-leak level=2 param=none method=GET service=node-api url=/spa/events param_loc=path needs_oob=false auth=false detection=passive tags=discovery,sse,info-leak proof_kind=marker proof_desc="The event stream contains a reusable session token"
+route('GET', /^\/spa\/events$/, async (req, res) => {
+  const token = crypto.randomBytes(8).toString('hex');
+  labTrigger('CRAWL-007', req, { token });
+  const body = `event: session\ndata: {"user":"admin","session_token":"${token}"}\n\nevent: heartbeat\ndata: {"ok":true}\n\n`;
+  const buf = Buffer.from(body);
+  res.writeHead(200, { 'content-type': 'text/event-stream', 'content-length': buf.length });
+  res.end(buf);
+});
+
+// @control id=CRAWL-007-C twin_of=CRAWL-007 url=/spa/events_safe method=GET param=none service=node-api param_loc=path
+route('GET', /^\/spa\/events_safe$/, async (req, res) => {
+  sendText(res, 200, 'event: heartbeat\ndata: {"ok":true}\n\n', 'text/event-stream');
+});
+
+// @vuln id=CRAWL-008 name="Hidden admin panel reachable without authentication" cwe=CWE-425 owasp=A01:2021 type=hidden-panel level=2 param=none method=GET service=node-api url=/spa/panel param_loc=path needs_oob=false auth=false detection=active tags=discovery,access-control,hidden-endpoint proof_kind=marker proof_desc="The undocumented support panel is served to anyone who finds it"
+route('GET', /^\/spa\/panel$/, async (req, res) => {
+  labTrigger('CRAWL-008', req, {});
+  sendHtml(res, 200, `<!doctype html><html><body><h1>Internal support panel</h1><p>admin panel - order override - coupon reset</p></body></html>`);
+});
+
+// @control id=CRAWL-008-C twin_of=CRAWL-008 url=/spa/panel_safe method=GET param=none service=node-api param_loc=path
+route('GET', /^\/spa\/panel_safe$/, async (req, res) => {
+  sendJson(res, 403, { error: 'authentication required' });
+});
+
+route('GET', /^\/spa\/surface\.json$/, async (req, res) => {
+  sendJson(res, 200, { surfaces: ['/spa/#/dashboard', '/spa/#/settings', '/spa/panel', '/spa/api/products?page=1', '/spa/events'] });
+});
+
+// SPA shell catch-all (soft-404 behaviour)
+route('GET', /^\/spa(\/.*)?$/, async (req, res) => {
+  sendHtml(res, 200, SPA_INDEX_HTML);
+});
+
 // ─── Server ──────────────────────────────────────────────────────────────────
 
 const server = http.createServer(async (req, res) => {
