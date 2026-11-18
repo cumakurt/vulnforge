@@ -8,15 +8,14 @@
 
 VulnForge Lab; tek bir URL üzerinden erişilebilen gerçekçi bir e-ticaret sitesi
 (**ShopForge**) olarak sunulan çok dilli, kasıtlı olarak zafiyetli web
-uygulamasıdır. Tarayıcı `/` adresinden başlayarak tüm 99 zafiyeti
-normal sayfa gezintisi yoluyla keşfedebilir.
+uygulamasıdır.
 
 | | |
 |---|---|
-| **Durum** | v2.0 — 10 container, 99 zafiyet, 99/99 smoke geçiş |
+| **Durum** | v2.0 — tam profilde 9 konteyner |
 | **Zafiyet sayısı** | 99 (L1–L3) ve 99 güvenli kontrol ikizi |
 | **Scanner portalı** | `http://127.0.0.1:8000/` — ShopForge e-ticaret sitesi |
-| **Container sayısı** | 10 (v1.0'daki 19'dan azaltıldı) |
+| **Container sayısı** | `full` ve `core` 9, `api` ve `waf` 5'er |
 | **Lisans** | **Yalnızca AGPL-3.0** |
 | **Geliştirici** | Cuma KURT — [cumakurt@gmail.com](mailto:cumakurt@gmail.com) |
 
@@ -30,12 +29,11 @@ normal sayfa gezintisi yoluyla keşfedebilir.
 ```bash
 git clone https://github.com/cumakurt/vulnforge.git
 cd vulnforge
-./docker_install.sh          # tüm 10 container başlatır (full profil)
+./docker_install.sh          # 9 konteyner başlatır (full profil)
 ```
 
-Kurulum betiği: host işletim sistemini tespit eder, Docker'ı doğrular,
-boş port seçer, imajları derler ve smoke suite ile 99 zafiyetin canlı
-olduğunu doğrular.
+Kurulum betiği ana makinenin işletim sistemini algılar, Docker'ı doğrular,
+boş bir port seçer, imajları derler ve smoke testlerini çalıştırır.
 
 ```bash
 # Opsiyonel bayraklar
@@ -57,6 +55,9 @@ cp .env.example .env
 docker compose --profile full up -d --build
 ```
 
+Mevcut bir kurulumu yükseltiyorsanız eski ShopForge konteynerini kaldırmak
+için Compose başlatma komutuna `--remove-orphans` ekleyin.
+
 ### Durdurma / sıfırlama
 
 ```bash
@@ -74,13 +75,14 @@ make reset     # veritabanlarını ve olay günlüğünü sıfırla
 http://127.0.0.1:8000/
 ```
 
-ShopForge gerçekçi bir e-ticaret sitesidir. 99 zafiyet endpoint'i,
-`/` adresinden başlayarak bağlantılar, formlar, JavaScript çağrıları,
-`robots.txt`, `sitemap.xml` ve HTML yorumları aracılığıyla keşfedilebilir.
+ShopForge kataloğunda adı, fiyatı, kategorisi ve açıklaması olan 16 kurgusal
+ürün bulunur. Katalog ve ürün detay sayfaları aynı kayıtları
+`services/shopforge/catalog.json` dosyasından alır. Tarama kapsamı,
+tarayıcının gezinme ve oturum ayarlarına bağlıdır.
 
 | Yol | Servis | Zafiyet grupları |
 |---|---|---|
-| `/` → `/products`, `/search`, … | shopforge (portal) | Gezinti yüzeyi |
+| `/` → `/products`, `/search`, … | gateway (ShopForge) | Gezinti yüzeyi |
 | `/php/` | php-web (PHP 8 + MySQL) | SQLi, XSS, CMDi, LFI, Upload, CSRF, IDOR, Auth |
 | `/api/` | node-api (Node 20) | BOLA, BOPLA, BFLA, Mass assignment, JWT, NoSQLi, SSRF |
 | `/graphql` | node-api (Node 20) | Introspection, batching, alias DoS, BOLA |
@@ -116,20 +118,22 @@ ShopForge gerçekçi bir e-ticaret sitesidir. 99 zafiyet endpoint'i,
 
 ## 4. Container mimarisi (v2.0)
 
-`full` profilinde 10 container (v1.0'daki 19'dan azaltıldı):
+`full` profili dokuz konteyner çalıştırır. Nginx ve ShopForge aynı gateway
+konteynerinde çalışır. ShopForge konteynerin loopback arayüzünü dinler. İki
+süreçten biri beklenmedik şekilde durursa gateway yeniden başlar. Diğer
+servisler mevcut konteyner ve ağ sınırlarını korur.
 
 | # | Container | Rol | Zafiyet sayısı |
 |---|---|---|---|
-| 1 | `vulnforge-gateway` | Nginx proxy + TLS + WAF | yönlendirme |
+| 1 | `vulnforge-gateway` | Nginx proxy + TLS + WAF + ShopForge | yönlendirme |
 | 2 | `vulnforge-lab-control` | Kontrol düzlemi + IMDSv1 SSRF hedefi | — |
 | 3 | `vulnforge-oob-collector` | HTTP + DNS OOB toplayıcı | — |
-| 4 | `vulnforge-shopforge` | ShopForge e-ticaret portalı | — |
-| 5 | `vulnforge-php-web` | PHP 8 / Apache | 26 |
-| 6 | `vulnforge-mysql` | MySQL 8 (php-web için gerekli) | — |
-| 7 | `vulnforge-node-api` | Node.js 20 (API + GraphQL + SPA birleştirildi) | 28 |
-| 8 | `vulnforge-flask-svc` | Python Flask (PY + OAuth + Legacy birleştirildi) | 25 |
-| 9 | `vulnforge-spring-svc` | Java 17 (JVM'e özgü zafiyetler) | 10 |
-| 10 | `vulnforge-go-svc` | Go 1.22 (goroutine race, debug.Stack) | 10 |
+| 4 | `vulnforge-php-web` | PHP 8 / Apache | 26 |
+| 5 | `vulnforge-mysql` | MySQL 8 (php-web için gerekli) | — |
+| 6 | `vulnforge-node-api` | Node.js 20 (API + GraphQL + SPA birleştirildi) | 28 |
+| 7 | `vulnforge-flask-svc` | Python Flask (PY + OAuth + Legacy birleştirildi) | 25 |
+| 8 | `vulnforge-spring-svc` | Java 17 (JVM'e özgü zafiyetler) | 10 |
+| 9 | `vulnforge-go-svc` | Go 1.22 (goroutine race, debug.Stack) | 10 |
 
 ### Birleştirilen servisler
 
@@ -153,6 +157,10 @@ ShopForge gerçekçi bir e-ticaret sitesidir. 99 zafiyet endpoint'i,
 ---
 
 ## 5. Doğrulama
+
+Çalışan gateway üzerinde portalı ve sentetik kataloğu kontrol etmek için
+`python3 tests/test_shopforge.py` çalıştırın. HTTP portu farklıysa `BASE_URL`
+ortam değişkenini ayarlayın.
 
 ```bash
 pip install -r tests/requirements.txt

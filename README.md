@@ -8,15 +8,14 @@
 
 VulnForge Lab is a multi-language, intentionally vulnerable web application
 exposed through a single URL — `http://127.0.0.1:8000/` — as a realistic
-e-commerce site (**ShopForge**). A scanner that crawls the portal from `/`
-discovers all vulnerability surfaces through natural page navigation.
+e-commerce site (**ShopForge**).
 
 | | |
 |---|---|
-| **Status** | v2.0 — 10-container architecture, 99 vulns, 99/99 smoke pass |
+| **Status** | v2.0 — 9 containers in the full profile |
 | **Vulnerabilities** | 99 (L1–L3) with 99 safe control twins |
 | **Scanner portal** | `http://127.0.0.1:8000/` — ShopForge e-commerce site |
-| **Containers** | 10 (down from 19 in v1.0) |
+| **Containers** | `full` and `core` 9, `api` and `waf` 5 each |
 | **License** | **AGPL-3.0 only** |
 | **Author** | Cuma KURT — [cumakurt@gmail.com](mailto:cumakurt@gmail.com) |
 
@@ -30,11 +29,11 @@ discovers all vulnerability surfaces through natural page navigation.
 ```bash
 git clone https://github.com/cumakurt/vulnforge.git
 cd vulnforge
-./docker_install.sh          # starts all 10 containers (full profile)
+./docker_install.sh          # starts all 9 containers (full profile)
 ```
 
 The installer detects the host OS, verifies Docker, picks a free port,
-builds images and runs the smoke suite to confirm all 99 vulns are live.
+builds images and runs the smoke suite.
 
 ```bash
 # Optional flags
@@ -56,6 +55,9 @@ cp .env.example .env
 docker compose --profile full up -d --build
 ```
 
+If you are upgrading an existing installation, add `--remove-orphans` to
+the Compose start command to remove the old ShopForge container.
+
 ### Stop / reset
 
 ```bash
@@ -73,13 +75,14 @@ make reset     # reset databases and event log
 http://127.0.0.1:8000/
 ```
 
-ShopForge is a realistic e-commerce site. All 99 vulnerability endpoints are
-discoverable by crawling from `/` through links, forms, JavaScript calls,
-`robots.txt`, `sitemap.xml` and HTML comments.
+ShopForge includes 16 fictional products with names, prices, categories and
+descriptions. The catalog and product detail pages share the seed records in
+`services/shopforge/catalog.json`. Scan coverage depends on the scanner's
+crawl and session settings.
 
 | Path | Service (backend) | Vulnerability groups |
 |---|---|---|
-| `/` → `/products`, `/search`, … | shopforge (portal) | Navigation surface |
+| `/` → `/products`, `/search`, … | gateway (ShopForge) | Navigation surface |
 | `/php/` | php-web (PHP 8 + MySQL) | SQLi, XSS, CMDi, LFI, Upload, CSRF, IDOR, Auth |
 | `/api/` | node-api (Node 20) | BOLA, BOPLA, BFLA, Mass assignment, JWT, NoSQLi, SSRF |
 | `/graphql` | node-api (Node 20) | Introspection, batching, alias DoS, BOLA |
@@ -92,10 +95,10 @@ discoverable by crawling from `/` through links, forms, JavaScript calls,
 
 Control twins (hardened safe endpoints) live next to each vulnerable endpoint.
 
-### HTTPS target
+### HTTPS listener
 
 ```
-https://127.0.0.1:8443/   (self-signed certificate)
+https://127.0.0.1:8443/   (status response with a self-signed certificate)
 ```
 
 ### Synthetic credentials
@@ -125,20 +128,22 @@ All data is synthetic. No real personal data or secrets included.
 
 ## 4. Container architecture (v2.0)
 
-10 containers in the `full` profile (down from 19 in v1.0):
+The `full` profile runs nine containers. Nginx and ShopForge share the
+gateway container. ShopForge listens on the container's loopback interface,
+and the gateway restarts if either process exits unexpectedly. The other
+services retain their container and network boundaries.
 
 | # | Container | Role | Vulns |
 |---|---|---|---|
-| 1 | `vulnforge-gateway` | Nginx reverse proxy + TLS + WAF | routing |
+| 1 | `vulnforge-gateway` | Nginx reverse proxy + TLS + WAF + ShopForge | routing |
 | 2 | `vulnforge-lab-control` | Control plane + IMDSv1 SSRF target | — |
 | 3 | `vulnforge-oob-collector` | HTTP + DNS out-of-band collector | — |
-| 4 | `vulnforge-shopforge` | ShopForge e-commerce portal | — |
-| 5 | `vulnforge-php-web` | PHP 8 / Apache | 26 |
-| 6 | `vulnforge-mysql` | MySQL 8 (required by php-web) | — |
-| 7 | `vulnforge-node-api` | Node.js 20 (API + GraphQL + SPA merged) | 28 |
-| 8 | `vulnforge-flask-svc` | Python Flask (PY + OAuth + Legacy merged) | 25 |
-| 9 | `vulnforge-spring-svc` | Java 17 (JVM-exclusive vulns) | 10 |
-| 10 | `vulnforge-go-svc` | Go 1.22 (goroutine race, debug.Stack) | 10 |
+| 4 | `vulnforge-php-web` | PHP 8 / Apache | 26 |
+| 5 | `vulnforge-mysql` | MySQL 8 (required by php-web) | — |
+| 6 | `vulnforge-node-api` | Node.js 20 (API + GraphQL + SPA merged) | 28 |
+| 7 | `vulnforge-flask-svc` | Python Flask (PY + OAuth + Legacy merged) | 25 |
+| 8 | `vulnforge-spring-svc` | Java 17 (JVM-exclusive vulns) | 10 |
+| 9 | `vulnforge-go-svc` | Go 1.22 (goroutine race, debug.Stack) | 10 |
 
 ### Merged services (v2.0)
 
@@ -164,6 +169,9 @@ Services that ran as separate containers in v1.0 are now merged:
 ---
 
 ## 5. Verification
+
+Run `python3 tests/test_shopforge.py` against a running gateway to check the
+portal and synthetic catalog. Set `BASE_URL` if the HTTP port differs.
 
 ```bash
 pip install -r tests/requirements.txt

@@ -1,0 +1,15 @@
+**
+!gateway/
+!gateway/nginx.conf
+!gateway/profiles/
+!gateway/profiles/**
+!gateway/tls/
+!gateway/tls/**
+!gateway/start.sh
+!services/
+!services/shopforge/
+!services/shopforge/main.py
+!services/shopforge/catalog.json
+!services/shopforge/requirements.txt
+!services/shopforge/src/
+!services/shopforge/src/**

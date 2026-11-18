@@ -1,7 +1,6 @@
 # VulnForge Lab — Docker Compose
 #
-# Architecture: 9 application containers (down from 19).
-# All 78+ vulnerabilities preserved.
+# Architecture: 9 containers in the full profile.
 #
 # Merged services:
 #   crawl-lab   → node-api  (/spa/* routes)
@@ -17,16 +16,15 @@
 #   mailhog   — no vuln tests SMTP directly
 #
 # Running containers:
-#   1. gateway          Nginx reverse proxy + WAF profiles
+#   1. gateway          Nginx reverse proxy + ShopForge portal
 #   2. lab-control      Control plane + IMDSv1 metadata simulator
 #   3. oob-collector    OOB HTTP + DNS callback listener
-#   4. shopforge        Unified scanner portal (synthetic e-commerce site)
-#   5. php-web          PHP/Apache — 26 vulns (SQLi, XSS, CSRF, LFI, …)
-#   6. mysql            Required by php-web (raw mysqli, session fixation)
-#   7. node-api         Node.js — 28 vulns (API, GQL, CRAWL merged)
-#   8. flask-svc        Python  — 25 vulns (PY, OAUTH, LEG merged)
-#   9. spring-svc       Java    — 10 vulns (XXE, deserialization, JNDI, …)
-#  10. go-svc           Go      — 10 vulns (race condition, goroutine, …)
+#   4. php-web          PHP/Apache — 26 vulns (SQLi, XSS, CSRF, LFI, …)
+#   5. mysql            Required by php-web (raw mysqli, session fixation)
+#   6. node-api         Node.js — 28 vulns (API, GQL, CRAWL merged)
+#   7. flask-svc        Python  — 25 vulns (PY, OAUTH, LEG merged)
+#   8. spring-svc       Java    — 10 vulns (XXE, deserialization, JNDI, …)
+#   9. go-svc           Go      — 10 vulns (race condition, goroutine, …)
 #
 # Usage:
 #   ./docker_install.sh           # starts all services
@@ -49,7 +47,10 @@ services:
 
   # ── Gateway ───────────────────────────────────────────────────────────────
   gateway:
-    build: ./gateway
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    init: true
     image: vulnforge/gateway:latest
     container_name: vulnforge-gateway
     profiles: [core, full, api, waf]
@@ -61,7 +62,7 @@ services:
     <<: *no-new-privileges
     deploy:
       resources:
-        limits: { cpus: "0.50", memory: 128M }
+        limits: { cpus: "0.75", memory: 256M }
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8000/"]
       <<: *hc
@@ -116,27 +117,6 @@ services:
         limits: { cpus: "0.25", memory: 128M }
     healthcheck:
       test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9000/health')"]
-      <<: *hc
-    restart: unless-stopped
-
-  # ── ShopForge Portal ──────────────────────────────────────────────────────
-  # Unified scanner target: realistic e-commerce site, all vulns discoverable
-  # from a single URL through natural navigation + crawling.
-  shopforge:
-    build: ./services/shopforge
-    image: vulnforge/shopforge:latest
-    container_name: vulnforge-shopforge
-    profiles: [core, full, api, waf]
-    networks:
-      - lab_net
-    environment:
-      - PORT=3100
-    <<: *no-new-privileges
-    deploy:
-      resources:
-        limits: { cpus: "0.25", memory: 128M }
-    healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:3100/health')"]
       <<: *hc
     restart: unless-stopped
 

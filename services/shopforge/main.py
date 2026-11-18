@@ -8,21 +8,19 @@ through realistic links, forms, JavaScript and API references.
 WARNING: intentionally vulnerable — run in an isolated lab only.
 """
 
-import os
+import json
 from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-PORT = int(os.environ.get("PORT", 3100))
-TEMPLATES_DIR = Path(__file__).parent / "src" / "templates"
-STATIC_DIR = Path(__file__).parent / "src" / "static"
+APP_DIR = Path(__file__).parent
+CATALOG = json.loads((APP_DIR / "catalog.json").read_text(encoding="utf-8"))
+PRODUCTS_BY_ID = {str(product["id"]): product for product in CATALOG}
 
 app = FastAPI(docs_url=None, redoc_url=None)
-app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
+templates = Jinja2Templates(directory=APP_DIR / "src" / "templates")
 
 
 @app.get("/health")
@@ -38,12 +36,17 @@ async def home(request: Request):
 
 @app.get("/products", response_class=HTMLResponse)
 async def products(request: Request, id: str = "1", q: str = ""):
-    return templates.TemplateResponse("products.html", {"request": request, "id": id, "q": q})
+    return templates.TemplateResponse(
+        "products.html", {"request": request, "id": id, "q": q, "catalog": CATALOG}
+    )
 
 
 @app.get("/product/{pid}", response_class=HTMLResponse)
 async def product_detail(request: Request, pid: str = "1"):
-    return templates.TemplateResponse("product_detail.html", {"request": request, "pid": pid})
+    return templates.TemplateResponse(
+        "product_detail.html",
+        {"request": request, "pid": pid, "product": PRODUCTS_BY_ID.get(pid)},
+    )
 
 
 @app.get("/search", response_class=HTMLResponse)

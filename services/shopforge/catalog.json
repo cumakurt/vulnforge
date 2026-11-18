@@ -1,0 +1,18 @@
+[
+  {"id": 1, "name": "ProBook Elite 15", "category": "Laptops", "price": "899.99", "description": "15-inch notebook with 16 GB of memory and a 512 GB SSD."},
+  {"id": 2, "name": "NexPhone Pro X", "category": "Electronics", "price": "749.00", "description": "6.7-inch phone with 256 GB of storage."},
+  {"id": 3, "name": "SecureVPN Annual License", "category": "Software", "price": "39.99", "description": "One-year license for a fictional privacy service."},
+  {"id": 4, "name": "AirSound Pro Headset", "category": "Accessories", "price": "199.00", "description": "Wireless headset with active noise cancellation."},
+  {"id": 5, "name": "CedarJet M220 Printer", "category": "Electronics", "price": "119.00", "description": "Compact duplex printer with a 150-sheet tray."},
+  {"id": 6, "name": "HarborCam Pocket 4K", "category": "Electronics", "price": "149.00", "description": "Pocket camera with a wide-angle lens and USB-C charging."},
+  {"id": 7, "name": "MicaView 27 Monitor", "category": "Electronics", "price": "269.00", "description": "27-inch QHD display with an adjustable stand."},
+  {"id": 8, "name": "Juniper TKL Keyboard", "category": "Accessories", "price": "79.50", "description": "Compact wired keyboard with tactile switches."},
+  {"id": 9, "name": "DriftPoint Trackball", "category": "Accessories", "price": "44.90", "description": "Ergonomic wireless trackball with three programmable buttons."},
+  {"id": 10, "name": "Beacon Mesh Duo", "category": "Networking", "price": "129.00", "description": "Two mesh access points for a home office."},
+  {"id": 11, "name": "Fjord 65W Charger", "category": "Accessories", "price": "34.50", "description": "Dual-port USB-C desktop charger."},
+  {"id": 12, "name": "Granite 1 TB SSD", "category": "Electronics", "price": "94.90", "description": "Portable solid-state storage with a braided cable."},
+  {"id": 13, "name": "Orbit Gamepad", "category": "Gaming", "price": "54.00", "description": "Wireless controller with adjustable trigger travel."},
+  {"id": 14, "name": "MicaStream Mini", "category": "Electronics", "price": "59.00", "description": "Compact HDMI media player with a voice remote."},
+  {"id": 15, "name": "Slate Photo Desk", "category": "Software", "price": "24.99", "description": "Fictional desktop photo library and editing software."},
+  {"id": 16, "name": "OakKey USB-C", "category": "Security", "price": "32.00", "description": "Fictional USB-C security key with touch confirmation."}
+]
